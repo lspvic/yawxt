@@ -13,14 +13,6 @@ import pytest
 from flask import Flask, request
 from yawxt import OfficialAccount, MessageProcessor, check_signature, Message
 
-appid = os.environ.get("WECHAT_APPID")
-secret = os.environ.get("WECHAT_SECRET")
-token = os.environ.get("WECHAT_TOKEN")
-
-assert appid is not None, "please set 'WECHAT_APPID' envrionment variable"
-assert secret is not None, "please set 'WECHAT_SECRET' envrionment variable"
-assert token is not None, "please set 'WECHAT_TOKEN' envrionment variable"
-
 class MessageProcessorTester(MessageProcessor):
 
     def __init__(self, content, state = None, debug_to_wechat = None):
