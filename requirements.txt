@@ -1,0 +1,7 @@
+requests_oauthlib
+requests
+oauthlib
+sqlalchemy
+flask
+flask_sqlalchemy
+pytest
