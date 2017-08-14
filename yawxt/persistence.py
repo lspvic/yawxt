@@ -14,7 +14,7 @@ except:
 from .message import MessageProcessor
 from .models import *
 
-__all__ = ["Base", "user_table", "message_table", "location_table", "create_all", "PersistentMessageProcessor"]
+__all__ = ["user_table", "message_table", "location_table", "create_all", "PersistentMessageProcessor"]
     
 Base = declarative_base()
 
@@ -69,7 +69,10 @@ mapper(Location, location_table,
 )
 
 def create_all(bind):
-    '''创建数据库及所有表'''
+    '''创建数据库及所有表
+    
+    :param bind: 一般为sqlalchemy ``Engine`` 对象
+    '''
     Base.metadata.create_all(bind) 
        
 class PersistentMessageProcessor(MessageProcessor):
@@ -77,14 +80,15 @@ class PersistentMessageProcessor(MessageProcessor):
         发送消息用户资料保存到数据库
         
     :param content: 微信发送的消息xml字符串
-    :param account: 微信公众号账号, :class:`~easywechat.OfficialAccount` 对象
+    :param account: 微信公众号账号, :class:`~yawxt.OfficialAccount` 对象
     :param db_session_maker: sqlalchemy session生成方法，一般为
         ``sessionmaker(bind=engine)`` ，例如
         
         .. code-block:: python
-    
+        
+            Session = sessionmaker(bind=engine)
             processor = PersistentMessageProcessor(content, account,
-                db_session_maker = sessionmaker(bind=engine))
+                db_session_maker = Session)
 
     '''
         
@@ -97,7 +101,7 @@ class PersistentMessageProcessor(MessageProcessor):
     def user_location(self):
         '''用户的地理位置，用户最后一次上报的位置，从数据库中获取
         
-        :type: :class:`yawxt.Location`
+        :type: :class:`~yawxt.Location`
         '''
         if not self._user_location:
             self._user_location = self.db_session.query(Location).filter_by(openid=self.openid).order_by(Location.time.desc()).first()

@@ -39,9 +39,12 @@ class MessageProcessor(object):
     #. 使用 :meth:`reply` 得到最终发送给微信服务器的文本字符串
     
     :param content: 从微信服务器接收的xml格式的消息字符串
-    :param account: 微信公众号账号, :class:`~easywechat.OfficialAccount` 对象，
+    :param account: 微信公众号账号, :class:`OfficialAccount` 对象，
         默认为 ``None`` ，不设置
     :param debug_to_wechat: 使用 reply_debug_text 可以将调试信息发送到用户微信
+    
+    :ivar openid: 发送消息用户的openid
+    :ivar message: 接收到的消息对象，类型为 :class:`yawxt.Message`
     '''
 
     def __init__(self, content, account=None,
@@ -74,8 +77,8 @@ class MessageProcessor(object):
 
     @property
     def user(self):
-        '''发送微信消息的用户信息，为 :class:`~yawxt.Usere` 对象，
-            使用公众号account API获取，如果 ``account`` 为 ``None`` ，
+        '''发送微信消息的用户信息，为 :class:`User` 对象，
+            使用公众号 :class:`OfficialAccount` API获取，如果 ``account`` 为 ``None`` ，
             则返回 ``None`` '''
             
         if self.account is not None and self._user is None:
@@ -83,12 +86,11 @@ class MessageProcessor(object):
         return self._user
          
     def before(self):
-        '''在处理具体消息内容之前调用'''
+        '''在处理具体消息内容之前调用，可以使用  :attr:`self.openid` , :attr:`self.user` , 
+            :attr:`self.messsage` 等属性
+        '''
         pass
-        
-    def finish(self):
-        '''在回复完所有消息之后调用'''
-        pass
+
         
     def log(self, content, level=logging.DEBUG, **kwargs):
         logger.log(
@@ -232,8 +234,12 @@ class MessageProcessor(object):
     def event_template_send_job_finished(self, status):
         '''模板消息发送任务完成事件
         
-        :param status: 消息发送完成之后的状态，包括\
-        "success", "ailed:user block", "failed: system failed" 三种
+        :param status: 消息发送完成之后的状态，包括以下三种：
+        
+            #. "success"
+            #. "failed:user block"
+            #. "failed: system failed"
+            
         '''
         self.log("%s send status: %s" % (self.msg_id, status))
 
@@ -385,8 +391,8 @@ class MessageProcessor(object):
         '''回复一条图文消息
         
         :param articles: 类型为 ``list`` , 包含每一条图文
-            每一个图文为一个 ``dict`` ，必须包含 ``title`` ``description``
-            ``picurl`` ``url`` 四个字段。消息最多包含8条，多余的会自动过滤。
+            每一个图文为一个 ``dict`` ，必须包含 ``title`` , ``description`` ,
+            ``picurl`` , ``url`` 四个字段。消息最多包含8条，多余的会自动过滤。
         '''
         items = []
         for atc in articles[:8]:
@@ -408,7 +414,14 @@ class MessageProcessor(object):
         texts.append('<PicUrl><![CDATA[%s]]></PicUrl>' % picurl)
         texts.append('<Url><![CDATA[%s]]></Url>' % url)
         texts.append('</item>')
-        return '\n'.join(texts)
+        return '\n'.join(texts)        
+        
+    def finish(self):
+        '''在回复完所有消息之后调用，此处可以使用类型为 :class:`Message` 的
+            消息回复对象 :attr:`self.reply_message` , 该对象在回复
+            消息为空时为 ``None`` 
+        '''
+        pass
 
     def reply(self):
         ''':returns: 事件或消息处理完成后最终回复给微信的文本内容

@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 __all__ = ["APIError", "OfficialAccount"]
 
 class APIError(Exception):
-    '''微信API调用异常类
+    '''微信API调用异常类，通过 :class:`~yawxt.OfficalAccount` 调用微信API错误码
+        不是0时抛出此异常
     
     :param errcode: 错误码，和微信全局错误码一致
     :param errmsg: 错误消息，微信API调用错误消息
@@ -139,57 +140,24 @@ class OfficialAccount():
 
         self._js_ticket = None
 
-    def get_semantic(self, query, city=None,
-                     category=[
-            'restaurant', 'map', 'nearby', 'coupon', 'travel',
-            'hotel', 'train', 'flight', 'weather', 'stock', 'remind',
-            'telephone', 'movie', 'music', 'video', 'novel',
-            'cookbook', 'baike', 'news', 'tv', 'app', 'nstruction',
-            'tv_instruction', 'car_instruction', 'website', 'search'],
-        lat=None, lon=None, region=None, uid=None, 
-    ):
-        '''语义理解接口. 具体请参见微信语义接口开发文档
-
-        :param query: 需要解析的文本字符串
-        :param city: 所在的城市
-        :param uid: 微信用户openid，可以使用使用上下文理解功能
-        :param category: 理解场景的服务类型，默认包含所有类别
-        :param lat: 地理位置纬度
-        :param lon: 地理位置经度
-        :param region: 所在的区域
-        :returns: 参见微信语义接口开发文档
-        
-        .. note:: 此接口问题比较多，异常返回而且错误码未知，请谨慎使用
-        '''
-        data = {
-            'query': query,
-            'category': ','.join(category),
-            'appid': self.appid
-        }
-        if uid is not None:
-            data['uid'] = uid
-        if lat is not None and lon is not None:
-            data['latitude'] = lat
-            data['longitude'] = lon
-        if city is not None:
-            data['city'] = city
-        if region is not None:
-            data['region'] = region
-
-        return self.client.post('semantic', json=data)
 
     def _request_user_list(self, next_openid):
         p = {'next_openid': next_openid}
         return self.client.get('user_list', params=p)
         
     def get_users_iterator(self):
-        ''':returns: 关注公众号所有用户的迭代器，可以使用 :meth:`next` 函数或 ``for`` 循环
-        得到每一个用户的openid::
+        '''
+        :rtype: generator
+        
+        :returns: 关注公众号所有用户的迭代器，可以使用 :meth:`next` 函数
+            或 ``for`` 循环得到每一个用户的openid：
 
-            it = account.get_users_iterator()
-            first_openid = next(it)
-            for openid in it:
-                do_something(openid)
+            .. code-block:: python
+            
+                it = account.get_users_iterator()
+                first_openid = next(it)
+                for openid in it:
+                    do_something(openid)
 
         可以使用 ``list(account.get_users_iterator())`` 直接获取所有用户的openid列表，
         要获取关注公众号的总用户数，请使用 :meth:`get_users_count` , 尤其是用户数
@@ -205,24 +173,23 @@ class OfficialAccount():
             next_openid = result["data"].get("next_openid", "")
 
     def get_users_count(self):
-        '''获取关注公众号的总用户人数'''
+        '''获取关注公众号的总用户人数
+        
+        :rtype: int
+        '''
         result = self._request_user_list('')
         return result["total"]
     
     def get_user_info(self, openid):
-        '''获取用户的详细信息
+        '''获取用户对象
         
         :param openid: 要获取信息用户的openid
-        :returns: :class:``yawxt.User`` 用户对象 
+        :returns: 用户对象 
+        :rtype:   User
         
         '''
         p = {'openid': openid}
-        print("KKKKKKKKKKK", User.__dict__)
         return User.from_dict(self.client.get('user_info', params=p))
-
-    def get_voice(self, media_id):
-        p = {'media_id': media_id}
-        return self.client.get('voice_download', params=p)
 
     def preview_message(self, openid, text):
         '''消息预览接口，给指定用户发送消息，此接口只是为了方便开发者查看消息的样式和排版
@@ -263,7 +230,7 @@ class OfficialAccount():
     def js_ticket(self):
         '''获得JS API调用的临时票据jsapi_ticket
         
-        :returns: 票据 ``dict`` , 包含 ``ticket``, ``expires_at``, ``expires_at``等字段
+        :returns: 票据 ``dict`` , 包含 ``ticket`` , ``expires_at`` , ``expires_at`` 等字段
         '''
         logger.debug("current js ticket: %s" % self._js_ticket)
         if not self._js_ticket or self._js_ticket["expires_at"] < time.time():
@@ -278,8 +245,8 @@ class OfficialAccount():
         
         :param url: js注入的url
         :param debug: js调试模式，默认为开启
-        :returns: JS-SDK config接入接口配置信息字典
-        
+        :returns: JS-SDK config接入接口配置信息
+        :rtype: dict        
         '''
         result = {
             'debug': "true" if debug else "false",
@@ -309,17 +276,18 @@ class OfficialAccount():
     def get_industry(self):
         '''获取模板消息的公众号的所属行业
         
-        :returns: 设置的两个所属行业字典::
+        :rtype: dict
+        :returns: 两个所属行业代码的字典，例如
         
-            :Example:
-        
-            {"primary_industry":
-                {"first_class":"运输与仓储",
-                "second_class":"快递"},
-            "secondary_industry":
-                {"first_class":"IT科技",
-                "second_class":"互联网|电子商务"}
-            }
+            .. code-block:: json
+            
+                {"primary_industry":
+                    {"first_class":"运输与仓储",
+                    "second_class":"快递"},
+                "secondary_industry":
+                    {"first_class":"IT科技",
+                    "second_class":"互联网|电子商务"}
+                }
             
         '''
         
@@ -330,6 +298,7 @@ class OfficialAccount():
         
         :param short_id: 系统模板库模板id
         :returns: 设置为公众号模板后的模板id
+        :rtype: str
         '''        
         return self.client.post("add_tmplate", json={
             "template_id_short": short_id})["template_id"]
@@ -345,7 +314,8 @@ class OfficialAccount():
     def get_template_list(self):
         '''获取公众号的所有消息模板列表
         
-        :returns: 消息模板的 ``list`` 
+        :returns: 消息模板列表
+        :rtype: list
         '''
         return self.client.get("get_templates")["template_list"]
 
@@ -375,5 +345,48 @@ class OfficialAccount():
             })
         elif url is not None:
             content["url"] = url
-        print(content)
-        return self.client.post("template_messge_send", json=content)["msgid"]
+        return self.client.post("template_messge_send", json=content)["msgid"]        
+
+    def get_voice(self, media_id):
+        p = {'media_id': media_id}
+        return self.client.get('voice_download', params=p)
+        
+    def get_semantic(self, query, city=None,
+                     category=[
+            'restaurant', 'map', 'nearby', 'coupon', 'travel',
+            'hotel', 'train', 'flight', 'weather', 'stock', 'remind',
+            'telephone', 'movie', 'music', 'video', 'novel',
+            'cookbook', 'baike', 'news', 'tv', 'app', 'nstruction',
+            'tv_instruction', 'car_instruction', 'website', 'search'],
+        lat=None, lon=None, region=None, uid=None, 
+    ):
+        '''语义理解接口. 具体请参见微信语义接口开发文档
+
+        :param query: 需要解析的文本字符串
+        :param city: 所在的城市
+        :param uid: 微信用户openid，可以使用使用上下文理解功能
+        :param category: 理解场景的服务类型，默认包含所有类别
+        :param lat: 地理位置纬度
+        :param lon: 地理位置经度
+        :param region: 所在的区域
+        :rtype: dict
+        :returns: 参见微信语义接口开发文档
+        
+        .. note:: 此接口问题比较多，异常返回而且错误码未知，请谨慎使用
+        '''
+        data = {
+            'query': query,
+            'category': ','.join(category),
+            'appid': self.appid
+        }
+        if uid is not None:
+            data['uid'] = uid
+        if lat is not None and lon is not None:
+            data['latitude'] = lat
+            data['longitude'] = lon
+        if city is not None:
+            data['city'] = city
+        if region is not None:
+            data['region'] = region
+
+        return self.client.post('semantic', json=data)

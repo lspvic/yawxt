@@ -117,7 +117,7 @@ todo_include_todos = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'alabaster'
+html_theme = 'default'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -295,3 +295,16 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
+
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
+# On RTD we can't import sphinx_rtd_theme, but it will be applied by
+# default anyway.  This block will use the same theme when building locally
+# as on RTD.
+if not on_rtd:
+    import sphinx_rtd_theme
+    html_theme = 'sphinx_rtd_theme'
+    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+
+# autodoc config
+autodoc_member_order = 'bysource'

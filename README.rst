@@ -1,9 +1,22 @@
-yawxt: Yet Another WeiXin Toolkit
-=======================
-又一个微信开发工具箱
+yawxt: 又一个微信开发工具箱
+============================
+Yet Another WeiXin Toolkit
+
+实体对象
+--------
+#. 消息对象 :class:`yawxt.Message`
+#. 用户对象 :class:`yawxt.User`
+#. 位置对象 :class:`yawxt.Location`
+
+使用数据对象可以很好的管理微信数据资源，如::
+    
+    user.nickname, user.headimgurl, user.city
+    location.latitude, location.longitude, location.time
+    message.msg_type, message.msg_id, message.create_time
 
 公众号API
------------
+---------
+:class:`yawxt.OfficialAccount` 封装公众号API
 
 .. code-block:: python
 
@@ -20,32 +33,46 @@ yawxt: Yet Another WeiXin Toolkit
     
     
 消息对话
-----------
+--------
+:class:`yawxt.MessageProcessor` 处理接收消息事件
 
 .. code-block:: python
 
+    from yawxt import MessageProcessor, OfficialAccount, check_signature
+    
     # 定义消息回复内容
-    from yawxt import MessageProcessor, OfficialAccount
     class Processor(MessageProcessor):
+    
+        # 当收到一条文本消息时
         def on_text(self, text):
             # 回复一条文本消息
-            self.reply_text("%s, 你好" % self.user.nickname)
-        def event_location(self,loc):
+            # 可以使用已定义的user对象
+            self.reply_text("你好:%s" % self.user.nickname)
+        
+        # 当收到地理位置上报事件时
+        def event_location(self,location):
             # 保存地理位置
             redis.hset("location::%s" % self.openid, 
-                {"lat": loc.latitude, "lon": loc.longitude})
-        def on_video(self, media_id):
-            
-            
-    # 在web框架中回复消息，以Flask为例
-    from yawxt import OfficialAccount, check_signature
+                {"lat": location.latitude, "lon": location.longitude})
+                
+        # 当收到一条图片消息时
+        def on_image(self, media_id, pic_url):        
+            # 可以调用公众号API，下载到本地
+            r = self.account.download_image(media_id)
+            with open("/path/to/images/%s.jpg" % media_id, "rb") as f:
+                f.write(r.content)
+            # 回复同样的图片
+            self.reply_image(media_id)            
+
     account = OfficialAccount(appid, secret, token)
     
+    # 在web框架中回复消息，以Flask为例
+    app = Flask(__name__)
     @app.route('/wechat', methods = ["GET", "POST"])
     def req():
-        signature = request.args.get('signature', '')
-        timestamp = request.args.get('timestamp', '')
-        nonce = request.args.get('nonce', '')
+        signature = request.args.get('signature')
+        timestamp = request.args.get('timestamp')
+        nonce = request.args.get('nonce')
         if not check_signature(token, timestamp, nonce, signature):
             return "Messages not From Wechat"
         if request.method == "GET":
@@ -56,21 +83,25 @@ yawxt: Yet Another WeiXin Toolkit
 消息持久化
 ------------
 
-继承 ``yawxt.persistence.PersistentMessageProcessor`` ，可以直接将接收的消息、
+使用 :class:`yawxt.persistence.PersistentMessageProcessor` ，不做任何处理就能够直接将接收的消息、
 用户信息、上报位置信息保存到数据库中：
 
 .. code-block:: python
 
     from yawxt.persistence import PersistentMessageProcessor
-        
+    
+    Session = session_maker(bind=engine)
     message = PersistentMessageProcessor(content, account=account, 
-        db_session_maker=session_maker(), debug_to_wechat=True)
+        db_session_maker=Session, debug_to_wechat=True)
     return_str = message.reply()
     
-更多的例子在example文件夹下面
+继承 :class:`yawxt.persistence.PersistentMessageProcessor` ，只关注自己的处理逻辑，所有消息的接收
+与发送都持久化到数据库中了。
+    
+更多的例子在 `examples <https://github.com/lspvic/yawxt/tree/master/examples>`_ 文件夹下面
 
 安装
------
+----
 使用pip安装yawxt:
 
 ``pip install yawxt``
@@ -80,7 +111,7 @@ yawxt: Yet Another WeiXin Toolkit
 ``pip install sqlalchemy PyMySQL``
 
 文档
------
-https://yawxt.readthedocs.com/
+----
+https://yawxt.readthedocs.io/
     
     

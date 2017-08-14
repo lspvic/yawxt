@@ -3,20 +3,17 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. module:: yawxt
+   
 .. include:: ../README.rst
-
-.. toctree::
-   :maxdepth: 2
 
 API
 ---------
 
-.. automodule:: yawxt
-    :members:
-
-.. automodule:: yawxt.persistence
-    :members:
-
+.. toctree::
+    :maxdepth: 2
+    
+    api
 
 Indices and tables
 ==================
