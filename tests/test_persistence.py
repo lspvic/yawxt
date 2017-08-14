@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import time
+from __future__ import unicode_literals
 
+import time
 import pytest
 
 from yawxt.persistence import PersistentMessageProcessor, create_all

@@ -11,7 +11,7 @@ setup(
     install_requires = [ 'requests_oauthlib', 'requests', 'oauthlib'],
     url = 'http://github.com/lspvic/yawxt',
     license = 'MIT License',
-    description = 'Yet Another WeiXin Tookit 又一个微信开发工具箱',
+    description = '又一个微信开发工具箱 Yet Another WeiXin Tookit',
     keywords=['wechat', 'weixin', '微信'],
     classifiers  = [
         'Intended Audience :: Developers',

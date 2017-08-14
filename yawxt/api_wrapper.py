@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 
+from __future__ import unicode_literals
 import time
 import hashlib
 import random
@@ -88,7 +89,7 @@ class RestClient(O2Session):
             raise APIError(result["errcode"], result["errmsg"])
         return result
 
-class OfficialAccount():
+class OfficialAccount(object):
     '''公众号API类，封装大部分公众号RESTful API的接口
     
     :param appid: 微信公众号appID
@@ -170,7 +171,7 @@ class OfficialAccount():
             result = self._request_user_list(next_openid)
             for openid in result["data"]["openid"]:
                 yield openid
-            next_openid = result["data"].get("next_openid", "")
+            next_openid = result["data"].get("next_openid", None)
 
     def get_users_count(self):
         '''获取关注公众号的总用户人数

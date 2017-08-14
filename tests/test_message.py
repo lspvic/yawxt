@@ -2,6 +2,7 @@
 
 '''Tests for Message Recieve'''
 
+from __future__ import unicode_literals
 import os
 import time
 import random
@@ -112,7 +113,7 @@ parameters = {
     "image": (("image", '''<PicUrl><![CDATA[this is a url]]></PicUrl>
  <MediaId><![CDATA[media_id]]></MediaId>
 ''', 1234567890123456), ("this is a url", "media_id")),
-    "voice": (("voice", '''
+    "voice": (("voice", u'''
 <MediaId><![CDATA[media_id]]></MediaId>
 <Format><![CDATA[Format]]></Format>
 <Recognition><![CDATA[腾讯微信团队]]></Recognition>
@@ -125,13 +126,13 @@ parameters = {
 <MediaId><![CDATA[media_id]]></MediaId>
 <ThumbMediaId><![CDATA[thumb_media_id]]></ThumbMediaId>
 ''', 1234567890123456), ("media_id", "thumb_media_id")),
-    "location_msg": (("location", '''
+    "location_msg": (("location", u'''
 <Location_X>23.134521</Location_X>
 <Location_Y>113.358803</Location_Y>
 <Scale>20</Scale>
 <Label><![CDATA[位置信息]]></Label>
 ''', 1234567890123456), (23.134521, 113.358803, 20, "位置信息")),
-    "link": (("link", '''
+    "link": (("link", u'''
 <Title><![CDATA[公众平台官网链接]]></Title>
 <Description><![CDATA[公众平台官网链接]]></Description>
 <Url><![CDATA[url]]></Url>''', 1234567890123456), 
@@ -150,9 +151,9 @@ def test_event(parametrize, xml_builder):
 
 @pytest.mark.parametrize("token,nonce,timestamp,signature, time_error",
     [("LpxhtFU4GN", "awekRO2Q2rhIXv3N5WUK", "1502593490", "22c3c573b9e4c3a15735a2f077bef067f4aac8d6", 0),
-    pytest.param("LpxhtFU4GN", "awekRO2Q2rhIXv3N5WUK", "1502593490", "22c3c573b9e4c3a15735a2f077bef067f4aac8d6", 600, marks=pytest.mark.xfail),
-    pytest.param("LpxhtFU4Gn", "awekRO2Q2rhIXv3N5WUK", "1502593490", "22c3c573b9e4c3a15735a2f077bef067f4aac8d6", 0, marks=pytest.mark.xfail),
-    pytest.param("LpxhtFU4GN", "awekRO2Q2rhIXv3N5WUK", "1502593490", "22c3c573b9e4c3a15735a2f077bef067f4aac8d5", 0, marks=pytest.mark.xfail),
+    pytest.mark.xfail(("LpxhtFU4GN", "awekRO2Q2rhIXv3N5WUK", "1502593490", "22c3c573b9e4c3a15735a2f077bef067f4aac8d6", 600)),
+    pytest.mark.xfail(("LpxhtFU4Gn", "awekRO2Q2rhIXv3N5WUK", "1502593490", "22c3c573b9e4c3a15735a2f077bef067f4aac8d6", 0)),
+    pytest.mark.xfail(("LpxhtFU4GN", "awekRO2Q2rhIXv3N5WUK", "1502593490", "22c3c573b9e4c3a15735a2f077bef067f4aac8d5", 0)),
     ])
 def test_check_signature(token, nonce, timestamp, signature, time_error):
     assert check_signature(token, nonce, timestamp, signature, time_error=time_error)

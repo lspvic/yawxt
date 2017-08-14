@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 
+from __future__ import unicode_literals
 import time
 import logging
 
@@ -57,15 +58,15 @@ location_table = Table("location", Base.metadata,
 )
 
 mapper(Message, message_table,
-    properties={key: getattr(message_table.c, key) for key in Message.__availabe_keys__}
+    properties=dict((key, getattr(message_table.c, key)) for key in Message.__availabe_keys__)
 )
     
 mapper(User, user_table,
-    properties={key: getattr(user_table.c, key) for key in User.__availabe_keys__}
+    properties=dict((key, getattr(user_table.c, key)) for key in User.__availabe_keys__)
 )
 
 mapper(Location, location_table,
-    properties={key: getattr(location_table.c, key) for key in Location.__availabe_keys__}
+    properties=dict((key, getattr(location_table.c, key)) for key in Location.__availabe_keys__)
 )
 
 def create_all(bind):

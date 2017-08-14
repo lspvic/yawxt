@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+
+from __future__ import unicode_literals
 import time
 import xml.etree.ElementTree as ET
 
@@ -11,7 +13,7 @@ def pop_from_etree(xml, tag):
         return ele
     return None
 
-class Message:
+class Message(object):
     '''微信消息类，包括接收消息和发送消息，事件也属于消息
     
     :ivar to_user_id: 如果是接收的用户消息，则为公众号appid，
@@ -51,6 +53,8 @@ class Message:
         :param content: xml文本字符串
         :rtype:  Message
         '''
+        if not isinstance(content, bytes):
+            content = content.encode("utf8")
         xml = ET.fromstring(content)
         to_user_id = pop_from_etree(xml, 'ToUserName').text
         from_user_id = pop_from_etree(xml,
@@ -65,7 +69,7 @@ class Message:
             msg_id = int(msg_id_node.text)
         else:
             msg_id = None
-        return cls(to_user_id, from_user_id, msg_id, msg_type, ET.tostring(xml, encoding="unicode"), create_time=create_time)
+        return cls(to_user_id, from_user_id, msg_id, msg_type, ET.tostring(xml).decode(), create_time=create_time)
     
     def build_xml(self):
         '''生成此消息的xml字符
@@ -93,7 +97,7 @@ class Message:
         texts.append("</xml>")
         return "\n".join(texts)
     
-class User:
+class User(object):
     '''公众号用户类
     
     :ivar subscribe: 是否订阅该公众号
@@ -142,7 +146,7 @@ class User:
         :rtype: Message
         '''
         user_dict["tagid_list"] =  ",".join(map(str, user_dict["tagid_list"] if "tagid_list" in user_dict else []))
-        user = cls(**{k:user_dict[k] for k in user_dict if k in cls.__availabe_keys__})
+        user = cls(**dict((k, user_dict[k]) for k in user_dict if k in cls.__availabe_keys__))
         return user
 
     def to_dict(self):
@@ -150,7 +154,7 @@ class User:
         
         :rtype: dict
         '''
-        val = {key: getattr(self, key) for key in self.__availabe_keys__}
+        val = dict((key, getattr(self, key)) for key in self.__availabe_keys__)
         val["tagid_list"] = self.tagids
         return val
         
@@ -164,7 +168,7 @@ class User:
             if k in self.__availabe_keys__:
                 setattr(self, k, update_dict[k])
                 
-class Location:
+class Location(object):
     '''用户上报地址类
     
     :ivar latitude: 位置纬度
