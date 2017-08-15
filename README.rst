@@ -1,6 +1,11 @@
 yawxt: 又一个微信开发工具箱
 ============================
+
+|build-status| |pypi-status| |pypi-pyversions| |docs|
+
 Yet Another WeiXin Toolkit
+
+文档： https://yawxt.readthedocs.io/
 
 实体对象
 --------
@@ -116,8 +121,16 @@ Yet Another WeiXin Toolkit
 
 ``pip install sqlalchemy PyMySQL``
 
-文档
-----
-https://yawxt.readthedocs.io/
+.. |build-status| image:: https://img.shields.io/travis/lspvic/yawxt.svg
+    :target: https://travis-ci.org/lspvic/yawxt
     
+.. |pypi-status| image:: https://img.shields.io/pypi/v/yawxt.svg
+    :target: https://pypi.python.org/pypi/yawxt
     
+.. |pypi-pyversions| image:: https://img.shields.io/pypi/pyversions/yawxt.svg
+    :target: https://pypi.python.org/pypi/yawxt
+    
+.. |docs| image:: https://readthedocs.org/projects/yawxt/badge/?version=latest
+   :alt: Documentation Status
+   :target: https://readthedocs.org/projects/yawxt/
+     
