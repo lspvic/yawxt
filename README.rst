@@ -4,11 +4,11 @@ Yet Another WeiXin Toolkit
 
 实体对象
 --------
-#. 消息对象 :class:`yawxt.Message`
-#. 用户对象 :class:`yawxt.User`
-#. 位置对象 :class:`yawxt.Location`
+#. 消息对象 ``yawxt.Message``
+#. 用户对象 ``yawxt.User``
+#. 位置对象 ``yawxt.Location``
 
-使用数据对象可以很好的管理微信数据资源，如::
+使用数据对象可以很好的管理和访问微信数据资源，如::
     
     user.nickname, user.headimgurl, user.city
     location.latitude, location.longitude, location.time
@@ -16,7 +16,7 @@ Yet Another WeiXin Toolkit
 
 公众号API
 ---------
-:class:`yawxt.OfficialAccount` 封装公众号API
+类 ``yawxt.OfficialAccount`` 封装公众号API
 
 .. code-block:: python
 
@@ -34,7 +34,7 @@ Yet Another WeiXin Toolkit
     
 消息对话
 --------
-:class:`yawxt.MessageProcessor` 处理接收消息事件
+类 ``yawxt.MessageProcessor`` 处理接收消息事件
 
 .. code-block:: python
 
@@ -83,7 +83,7 @@ Yet Another WeiXin Toolkit
 消息持久化
 ------------
 
-使用 :class:`yawxt.persistence.PersistentMessageProcessor` ，不做任何处理就能够直接将接收的消息、
+使用类 ``yawxt.persistence.PersistentMessageProcessor`` ，不做任何处理就能够直接将接收的消息、
 用户信息、上报位置信息保存到数据库中：
 
 .. code-block:: python
@@ -95,7 +95,7 @@ Yet Another WeiXin Toolkit
         db_session_maker=Session, debug_to_wechat=True)
     return_str = message.reply()
     
-继承 :class:`yawxt.persistence.PersistentMessageProcessor` ，只关注自己的处理逻辑，所有消息的接收
+继承 ``PersistentMessageProcessor`` ，只关注自己的处理逻辑，所有消息的接收
 与发送都持久化到数据库中了。
     
 更多的例子在 `examples <https://github.com/lspvic/yawxt/tree/master/examples>`_ 文件夹下面
