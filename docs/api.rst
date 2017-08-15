@@ -129,4 +129,5 @@
 
 .. autofunction:: create_all
 
-.. autoclass:: yawxt.APIError
+.. automodule:: yawxt.exceptions
+    :members:

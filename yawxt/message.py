@@ -6,6 +6,8 @@ import hashlib
 import logging
 import xml.etree.ElementTree as ET
 
+__all__ = ["check_signature", "MessageProcessor"]
+
 from .models import *
 
 logger = logging.getLogger(__name__)

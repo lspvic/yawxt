@@ -13,7 +13,10 @@ from flask_wechat import app, db, token
 import flask_wechat
 
 @pytest.fixture(scope="session", autouse=True)
-def create_db():
+def create_db(tmpdir_factory):
+    path = 'sqlite:///%s' % tmpdir_factory.mktemp("flask").join("wechat.db").realpath()
+    flask_wechat.app.config["SQLALCHEMY_DATABASE_URI"] = path
+    db.init_app(app)
     create_all(db.engine)
     
 @pytest.fixture(scope="session", autouse=True)

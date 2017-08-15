@@ -9,6 +9,7 @@ from functools import wraps
 import logging
 import requests
 import json
+from collections import defaultdict
 
 from requests_oauthlib import OAuth2Session as O2Session
 from oauthlib.oauth2 import BackendApplicationClient
@@ -18,23 +19,11 @@ from oauthlib.oauth2.rfc6749.clients.base import URI_QUERY
 
 from .models import User
 
+from .exceptions import APIError, default_exceptions
+
+__all__ = ["OfficialAccount"]
+
 logger = logging.getLogger(__name__)
-__all__ = ["APIError", "OfficialAccount"]
-
-class APIError(Exception):
-    '''微信API调用异常类，通过 :class:`~yawxt.OfficalAccount` 调用微信API错误码
-        不是0时抛出此异常
-    
-    :param errcode: 错误码，和微信全局错误码一致
-    :param errmsg: 错误消息，微信API调用错误消息
-    '''
-    def __init__(self, errcode, errmsg):
-        self.errcode = errcode
-        self.errmsg = errmsg
-        
-    def __str__(self):
-        return "API Exception, code: %s, msg: %s" %(self.errcode, self.errmsg)
-
 
 class WechatApplicationClient(BackendApplicationClient):
     def __init__(self, client_id, **kwargs):
@@ -47,6 +36,9 @@ class WechatApplicationClient(BackendApplicationClient):
 
     def prepare_request_body(self, **kwargs):
         return prepare_token_request('client_credential', **kwargs)
+        
+invoke_success = defaultdict(int)
+invoke_failure = defaultdict(int)
 
 class RestClient(O2Session):
 
@@ -55,6 +47,11 @@ class RestClient(O2Session):
         self.token_kwargs = token_kwargs or {}
         super(RestClient, self).__init__(
             client=WechatApplicationClient("wechat_client"))
+            
+    def fetch_token(self, *args, **kwargs):
+        token = super(RestClient, self).fetch_token(*args, **kwargs)
+        invoke_success["token"] += 1
+        return token
 
     def request(self, method, url, data=None, headers=None, withhold_token=False,
                 client_id=None, client_secret=None, **kwargs):
@@ -86,7 +83,11 @@ class RestClient(O2Session):
                 withhold_token=withhold_token, client_id=client_id, client_secret=client_secret, **kwargs)
             result = r.json()
         if 'errcode' in result and result["errcode"] != 0:
-            raise APIError(result["errcode"], result["errmsg"])
+            invoke_failure[api_type] += 1
+            code = result["errcode"]
+            error_cls = default_exceptions.get(code, APIError)
+            raise error_cls(result["errcode"], result["errmsg"])
+        invoke_success[api_type] += 1
         return result
 
 class OfficialAccount(object):

@@ -6,7 +6,7 @@ from yawxt.persistence import PersistentMessageProcessor
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
-app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///wechat.db'
+app.config["SQLALCHEMY_DATABASE_URI"] = ''
 db = SQLAlchemy(app)
 
 wechat_account = OfficialAccount("appid", "appsecret")
