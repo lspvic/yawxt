@@ -1,8 +1,7 @@
-requests_oauthlib
-requests
-oauthlib
-sqlalchemy
+-e .
 flask
+sqlalchemy
 flask_sqlalchemy
-pyOpenSSL
+Sphinx
+flake8
 pytest>=3.0.0
