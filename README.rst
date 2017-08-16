@@ -16,16 +16,17 @@ Yet Another WeiXin Toolkit
 
 公众号API
 ---------
-类 ``yawxt.OfficialAccount`` 封装公众号API
+类 ``yawxt.WxClient`` 封装公众号API
 
 .. code-block:: python
 
-    >>> from yawxt import OfficialAccount
-    >>> account = OfficialAccount("appid", "appsecret")
-    >>> openid = next(account.get_users_iterator())
+    >>> from yawxt import WxClient
+    >>> client = WxClient("appid", "appsecret")
+    >>> it = client.get_openid_iter()
+    >>> openid = next(it)
     >>> openid
     'o9KLls70ReakhjebmHUYxjbz9K8c'
-    >>> user = account.get_user_info(openid)
+    >>> user = client.get_user(openid)
     >>> user
     User(openid=o9KLls70ReakhjebmHUYxjbz9K8c, nickname=yawxt)
     >>> user.city
@@ -34,14 +35,14 @@ Yet Another WeiXin Toolkit
     
 消息对话
 --------
-类 ``yawxt.MessageProcessor`` 处理接收消息事件
+类 ``yawxt.MessageHandler`` 处理接收消息事件
 
 .. code-block:: python
 
-    from yawxt import MessageProcessor, OfficialAccount, check_signature
+    from yawxt import MessageHandler, WxClient, check_signature
     
     # 定义消息回复内容
-    class Processor(MessageProcessor):
+    class Handler(MessageHandler):
     
         # 当收到一条文本消息时
         def on_text(self, text):
@@ -58,18 +59,20 @@ Yet Another WeiXin Toolkit
         # 当收到一条图片消息时
         def on_image(self, media_id, pic_url):        
             # 可以调用公众号API，下载到本地
-            r = self.account.download_image(media_id)
+            r = self.client.download_image(media_id)
             with open("/path/to/images/%s.jpg" % media_id, "rb") as f:
                 f.write(r.content)
             # 回复同样的图片
             self.reply_image(media_id)            
 
-    account = OfficialAccount(appid, secret, token)
+    client = WxClient(appid, secret, token)
     
     # 在web框架中回复消息，以Flask为例
     app = Flask(__name__)
-    @app.route('/wechat', methods = ["GET", "POST"])
-    def req():
+    session_maker = sessionmaker(bind=engine)
+    token = "token"  # 公众号后台配置Token
+    @app.route('/wechat', methods=["GET", "POST"])
+    def wechat():
         signature = request.args.get('signature')
         timestamp = request.args.get('timestamp')
         nonce = request.args.get('nonce')
@@ -77,25 +80,28 @@ Yet Another WeiXin Toolkit
             return "Messages not From Wechat"
         if request.method == "GET":
             return request.args.get('echostr')
-        msg = Message(request.data, account, debug_to_wechat=app.debug)
+            
+        msg = PersistMessageHandler(request.data, wechat_account,
+                                db_session_maker=session_maker,
+                                debug_to_wechat=app.debug)
         return msg.reply()
         
 消息持久化
 ------------
 
-使用类 ``yawxt.persistence.PersistentMessageProcessor`` ，不做任何处理就能够直接将接收的消息、
+使用类 ``yawxt.persistence.PersistMessageHandler`` ，不做任何处理就能够直接将接收的消息、
 用户信息、上报位置信息保存到数据库中：
 
 .. code-block:: python
 
-    from yawxt.persistence import PersistentMessageProcessor
+    from yawxt.persistence import PersistMessageHandler
     
     Session = session_maker(bind=engine)
-    message = PersistentMessageProcessor(content, account=account, 
+    message = PersistMessageHandler(content, client=client, 
         db_session_maker=Session, debug_to_wechat=True)
     return_str = message.reply()
     
-继承 ``PersistentMessageProcessor`` ，只关注自己的处理逻辑，所有消息的接收
+继承 ``PersistMessageHandler`` ，只关注自己的处理逻辑，所有消息的接收
 与发送都持久化到数据库中了。
     
 更多的例子在 `examples <https://github.com/lspvic/yawxt/tree/master/examples>`_ 文件夹下面

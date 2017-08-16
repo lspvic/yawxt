@@ -24,8 +24,8 @@ def db_session(DB_Session):
     s.close()
     
 @pytest.fixture(scope="session", autouse=True)
-def location_report(account, DB_Session, xml_builder):
-    from yawxt.persistence import PersistentMessageProcessor
+def location_report(client, DB_Session, xml_builder):
+    from yawxt.persistence import PersistMessageHandler
     locations = [(37.2356, 120.001, 40),
                        (38.1478, 118.456, 50),
                        (39.1353, 117.518, 30),]
@@ -34,8 +34,8 @@ def location_report(account, DB_Session, xml_builder):
 <Precision>%s</Precision>'''
     for loc in locations:
         msg_text = xml_builder("event_LOCATION", location_str % loc)
-        processor = PersistentMessageProcessor(msg_text, 
-            account, db_session_maker = DB_Session, 
+        processor = PersistMessageHandler(msg_text, 
+            client, db_session_maker = DB_Session, 
             debug_to_wechat = True)
         processor.reply()
         time.sleep(2)

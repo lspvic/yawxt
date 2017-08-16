@@ -6,7 +6,7 @@ import hashlib
 import logging
 import xml.etree.ElementTree as ET
 
-__all__ = ["check_signature", "MessageProcessor"]
+__all__ = ["check_signature", "MessageHandler"]
 
 from .models import *
 
@@ -32,7 +32,7 @@ def check_signature(token, timestamp, nonce, signature, time_error = 600):
     tmpStr = hashlib.sha1(tmpStr.encode()).hexdigest()
     return tmpStr == signature
 
-class MessageProcessor(object):
+class MessageHandler(object):
     '''微信消息处理基类，继承此类定义不同消息的处理函数
     
     #. 继承以 ``event_`` 开头的方法对event事件进行处理，这类消息一般不进行回复    
@@ -42,7 +42,7 @@ class MessageProcessor(object):
     #. 使用 :meth:`reply` 得到最终发送给微信服务器的文本字符串
     
     :param content: 从微信服务器接收的xml格式的消息字符串
-    :param account: 微信公众号账号, :class:`OfficialAccount` 对象，
+    :param client: 微信公众号账号, :class:`WxClient` 对象，
         默认为 ``None`` ，不设置
     :param debug_to_wechat: 使用 reply_debug_text 可以将调试信息发送到用户微信
     
@@ -50,9 +50,9 @@ class MessageProcessor(object):
     :ivar message: 接收到的消息对象，类型为 :class:`yawxt.Message`
     '''
 
-    def __init__(self, content, account=None,
+    def __init__(self, content, client=None,
                  debug_to_wechat=False):
-        self.account = account
+        self.client = client
         self._debug_to_wechat = debug_to_wechat
         self._user = None
 
@@ -62,7 +62,7 @@ class MessageProcessor(object):
         
         self.message = Message.from_string(content)
         self.reply_message = None
-        self.openid = self.message.from_user_id
+        self.openid = self.message.from_id
         self.log("message received %s, content: %s" %
                 (self.message, self.message.content))
         self.before()
@@ -81,11 +81,11 @@ class MessageProcessor(object):
     @property
     def user(self):
         '''发送微信消息的用户信息，为 :class:`User` 对象，
-            使用公众号 :class:`OfficialAccount` API获取，如果 ``account`` 为 ``None`` ，
+            使用公众号 :class:`WxClient` API获取，如果 ``client`` 为 ``None`` ，
             则返回 ``None`` '''
             
-        if self.account is not None and self._user is None:
-            self._user = User.from_dict(self.account.get_user_info(self.openid))
+        if self.client is not None and self._user is None:
+            self._user = self.client.get_user(self.openid)
         return self._user
          
     def before(self):
@@ -432,14 +432,14 @@ class MessageProcessor(object):
         .. note:: 此方法只允许调用一次'''
         
         if self._processed:
-            raise Exception("MessageProcessor.reply 只能调用一次")
+            raise Exception("MessageHandler.reply() 只能调用一次")
 
         if self._reply_type is None:
             self.log("send empty, user will receive nothing")
             return ''
-        reply_message = Message(self.message.from_user_id, 
-            self.message.to_user_id, self.message.msg_id,
-            self._reply_type, self._reply
+        reply_message = Message(self.message.from_id, 
+            self.message.to_id, self._reply_type, self._reply,
+            self.message.msg_id,
         )
         self.log("send message: %s" % reply_message)
         self.reply_message = reply_message

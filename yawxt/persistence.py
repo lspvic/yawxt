@@ -12,17 +12,17 @@ except:
     logging.error("please install sqlalchemy if you want to store wechat messages on database")
     raise
 
-from .message import MessageProcessor
+from .message import MessageHandler
 from .models import *
 
-__all__ = ["user_table", "message_table", "location_table", "create_all", "PersistentMessageProcessor"]
+__all__ = ["user_table", "message_table", "location_table", "create_all", "PersistMessageHandler"]
     
 Base = declarative_base()
 
 message_table = Table("message", Base.metadata,
     Column('id', Integer, primary_key=True),
-    Column('to_user_id', String(100)),
-    Column("from_user_id", String(100)),
+    Column('to_id', String(100)),
+    Column("from_id", String(100)),
     Column("msg_id", BigInteger),
     Column("msg_type", String(50)),
     Column("create_time", Integer),
@@ -53,7 +53,7 @@ location_table = Table("location", Base.metadata,
     Column("latitude", Float),
     Column("longitude", Float),
     Column("precision", Float),
-    Column("time", Integer, default = lambda:int(time.time())),
+    Column("create_time", Integer, default = lambda:int(time.time())),
     Column("openid", String(100)),
 )
 
@@ -76,27 +76,27 @@ def create_all(bind):
     '''
     Base.metadata.create_all(bind) 
        
-class PersistentMessageProcessor(MessageProcessor):
+class PersistMessageHandler(MessageHandler):
     '''消息持久化类，继承此类自动将每一条消息、地理位置上报、
         发送消息用户资料保存到数据库
         
     :param content: 微信发送的消息xml字符串
-    :param account: 微信公众号账号, :class:`~yawxt.OfficialAccount` 对象
+    :param client: 微信公众号账号, :class:`~yawxt.WxClient` 对象
     :param db_session_maker: sqlalchemy session生成方法，一般为
         ``sessionmaker(bind=engine)`` ，例如
         
         .. code-block:: python
         
             Session = sessionmaker(bind=engine)
-            processor = PersistentMessageProcessor(content, account,
+            processor = PersistMessageHandler(content, client,
                 db_session_maker = Session)
 
     '''
         
-    def __init__(self, content, account,  db_session_maker, **kwargs):
+    def __init__(self, content, client,  db_session_maker, **kwargs):
         self.db_session = db_session_maker(expire_on_commit=False)
         self._user_location = None
-        super(PersistentMessageProcessor, self).__init__(content, account, **kwargs)
+        super(PersistMessageHandler, self).__init__(content, client, **kwargs)
     
     @property
     def user_location(self):
@@ -105,42 +105,44 @@ class PersistentMessageProcessor(MessageProcessor):
         :type: :class:`~yawxt.Location`
         '''
         if not self._user_location:
-            self._user_location = self.db_session.query(Location).filter_by(openid=self.openid).order_by(Location.time.desc()).first()
+            self._user_location = self.db_session.query(Location).filter_by(openid=self.openid).order_by(Location.create_time.desc()).first()
             self.log("find user's location: %s" % self._user_location)
         return self._user_location
         
     def before(self):
         self.save_user_info()
         self.db_session.add(self.message)
-        super(PersistentMessageProcessor, self).before()
+        super(PersistMessageHandler, self).before()
     
     def event_location(self, location):
         self.db_session.add(location)
         self.log("add location to db: %s" % location)
         self._user_location = location
-        super(PersistentMessageProcessor, self).event_location(location)
+        super(PersistMessageHandler, self).event_location(location)
     
-    def save_user_info(self, force_update = False):
+    def save_user_info(self, refresh_interval = 1.0):
         '''保存或更新发送消息的用户的信息
         
-        :param force_update: 强制从微信服务器获取用户最新资料，默认为 `False` .
+        :param refresh_interval: 从微信服务器刷新用户信息的间隔时间，从上次
+        保存到数据库到现在超过时间间隔则从微信数据库拉取，单位为天，
+        可以使用小数，默认为1天, refresh_interval为0时一直拉取.
         '''
         user = self.db_session.query(User).filter_by(openid=self.openid).first()
         self.log("find user in db: %s" % user)
-        if force_update or user is None:
-            print("GET USER INFO")
-            info = self.account.get_user_info(self.openid)
+        refresh = refresh_interval == 0 or user is not None and (time.time() - user.update_time) > refresh_interval * 86400
+        if refresh or user is None:
+            _user = self.client.get_user(self.openid)
             if user is None:
-                user = info
+                user = _user
                 self.db_session.add(user)
                 self.log("add user to db with dict: %s" % user)
             else:
-                user.update(info.to_dict())
-                self.log("update user with dict: %s" % info)
+                user.update(_user)
+                self.log("update user with dict: %s" % _user)
         self._user = user
         
     def finish(self):    
-        super(PersistentMessageProcessor, self).finish()
+        super(PersistMessageHandler, self).finish()
         
         if self.reply_message is not None:
             self.db_session.add(self.reply_message)

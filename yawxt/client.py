@@ -18,10 +18,9 @@ from oauthlib.oauth2.rfc6749.parameters import prepare_token_request
 from oauthlib.oauth2.rfc6749.clients.base import URI_QUERY
 
 from .models import User
-
 from .exceptions import APIError, default_exceptions
 
-__all__ = ["OfficialAccount"]
+__all__ = ["WxClient"]
 
 logger = logging.getLogger(__name__)
 
@@ -55,12 +54,12 @@ class RestClient(O2Session):
 
     def request(self, method, url, data=None, headers=None, withhold_token=False,
                 client_id=None, client_secret=None, **kwargs):
-        if url not in OfficialAccount.URLS:
+        if url not in WxClient.URLS:
             return super(RestClient, self).request(method, url, data=data, headers=headers, 
                 withhold_token=withhold_token, client_id=client_id, client_secret=client_secret, **kwargs)
 
         api_type = url
-        url = OfficialAccount.URLS[url]
+        url = WxClient.URLS[url]
         try:
             r = super(RestClient, self).request(method, url, data=data, headers=headers, 
                 withhold_token=withhold_token, client_id=client_id, client_secret=client_secret, **kwargs)
@@ -85,12 +84,14 @@ class RestClient(O2Session):
         if 'errcode' in result and result["errcode"] != 0:
             invoke_failure[api_type] += 1
             code = result["errcode"]
-            error_cls = default_exceptions.get(code, APIError)
-            raise error_cls(result["errcode"], result["errmsg"])
+            error_cls = default_exceptions.get(code, None)
+            if error_cls is None:
+                return APIError(result["errcode"], result["errmsg"])
+            raise error_cls(result["errmsg"])
         invoke_success[api_type] += 1
         return result
 
-class OfficialAccount(object):
+class WxClient(object):
     '''公众号API类，封装大部分公众号RESTful API的接口
     
     :param appid: 微信公众号appID
@@ -147,7 +148,7 @@ class OfficialAccount(object):
         p = {'next_openid': next_openid}
         return self.client.get('user_list', params=p)
         
-    def get_users_iterator(self):
+    def get_openid_iter(self):
         '''
         :rtype: generator
         
@@ -156,13 +157,13 @@ class OfficialAccount(object):
 
             .. code-block:: python
             
-                it = account.get_users_iterator()
+                it = client.get_openid_iter()
                 first_openid = next(it)
                 for openid in it:
                     do_something(openid)
 
-        可以使用 ``list(account.get_users_iterator())`` 直接获取所有用户的openid列表，
-        要获取关注公众号的总用户数，请使用 :meth:`get_users_count` , 尤其是用户数
+        可以使用 ``list(client.get_openid_iter())`` 直接获取所有用户的openid列表，
+        要获取关注公众号的总用户数，请使用 :meth:`get_user_count` , 尤其是用户数
         量比较多的情况下
         '''
         next_openid = ''
@@ -174,7 +175,7 @@ class OfficialAccount(object):
                 yield openid
             next_openid = result["data"].get("next_openid", None)
 
-    def get_users_count(self):
+    def get_user_count(self):
         '''获取关注公众号的总用户人数
         
         :rtype: int
@@ -182,16 +183,16 @@ class OfficialAccount(object):
         result = self._request_user_list('')
         return result["total"]
     
-    def get_user_info(self, openid):
+    def get_user(self, openid):
         '''获取用户对象
         
-        :param openid: 要获取信息用户的openid
+        :param openid: 要获取的用户对象的openid
         :returns: 用户对象 
         :rtype:   User
         
         '''
         p = {'openid': openid}
-        return User.from_dict(self.client.get('user_info', params=p))
+        return User(self.client.get('user_info', params=p))
 
     def preview_message(self, openid, text):
         '''消息预览接口，给指定用户发送消息，此接口只是为了方便开发者查看消息的样式和排版
@@ -207,7 +208,21 @@ class OfficialAccount(object):
         r = self.client.post('msg_preview', data=json.dumps(data, ensure_ascii=False).encode("utf-8"))
         return r["msg_id"] if 'msg_id' in r else None
 
-    def get_web_user_info(self, code):
+    def get_user_from_web(self, code):
+        '''使用网页授权获得微信用户信息，此方法返回genertor，
+        使用next方法先获取用户的openid，再获取 :class:`User` 对象。
+        如果仅想的得到open，则只要 ::
+                
+                user_gen = client.get_user_from_web(code)
+                openid = next(user_gen)
+                
+        或者得到open和用户对象 ::
+                
+                openid, user = client.get_user_from_web(code)
+        
+        :param code: 用户网页授权链接跳转得到的code码
+        :rtype: generator
+        '''
         web_client = OAuth2Session(
             client=BackendApplicationClient(
                 "wechat_web_client",
@@ -226,10 +241,9 @@ class OfficialAccount(object):
             self.URLS["web_user_info"], params={
                 'openid': openid})
         r.encoding = 'utf-8'
-        yield r.json()
+        yield User(r.json())
 
-    @property
-    def js_ticket(self):
+    def _get_js_ticket(self):
         '''获得JS API调用的临时票据jsapi_ticket
         
         :returns: 票据 ``dict`` , 包含 ``ticket`` , ``expires_at`` , ``expires_at`` 等字段
@@ -242,7 +256,7 @@ class OfficialAccount(object):
             logger.debug("get new js ticket: %s" % self._js_ticket)
         return self._js_ticket
 
-    def get_js_sign(self, url, debug=True):
+    def js_sign(self, url, debug=True):
         '''JS-SDK步骤三：config接入接口配置生成，这个过程需要在服务器端完成
         
         :param url: js注入的url
@@ -253,9 +267,9 @@ class OfficialAccount(object):
         result = {
             'debug': "true" if debug else "false",
             'nonceStr': ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(15)),
-            'jsapi_ticket': self.js_ticket["ticket"],
+            'jsapi_ticket': self._get_js_ticket()["ticket"],
             'timestamp': int(time.time()),
-            'url': url
+            'url': url,
         }
         tmpStr = '&'.join(['%s=%s' % (key.lower(), result[key])
                            for key in sorted(result)])
@@ -295,7 +309,7 @@ class OfficialAccount(object):
         
         return self.client.get("get_industry")
 
-    def add_template(self, short_id):
+    def add_sys_template(self, short_id):
         '''从系统模板库选择模板设置为公众号模板
         
         :param short_id: 系统模板库模板id
@@ -305,7 +319,7 @@ class OfficialAccount(object):
         return self.client.post("add_tmplate", json={
             "template_id_short": short_id})["template_id"]
             
-    def delete_template(self, template_id):
+    def del_template(self, template_id):
         '''删除公众号模板
         
         :param template_id: 要删除的模板id
@@ -353,26 +367,24 @@ class OfficialAccount(object):
         p = {'media_id': media_id}
         return self.client.get('voice_download', params=p)
         
-    def get_semantic(self, query, city=None,
-                     category=[
+    def semantic_parse(self, query, city=None, location=None,
+            region=None, category=[
             'restaurant', 'map', 'nearby', 'coupon', 'travel',
             'hotel', 'train', 'flight', 'weather', 'stock', 'remind',
             'telephone', 'movie', 'music', 'video', 'novel',
             'cookbook', 'baike', 'news', 'tv', 'app', 'nstruction',
             'tv_instruction', 'car_instruction', 'website', 'search'],
-        lat=None, lon=None, region=None, uid=None, 
     ):
         '''语义理解接口. 具体请参见微信语义接口开发文档
 
         :param query: 需要解析的文本字符串
         :param city: 所在的城市
-        :param uid: 微信用户openid，可以使用使用上下文理解功能
-        :param category: 理解场景的服务类型，默认包含所有类别
-        :param lat: 地理位置纬度
-        :param lon: 地理位置经度
+        :param location: 所在的位置，设置openid可以使用使用上
+            下文理解功能        
         :param region: 所在的区域
+        :param category: 理解场景的服务类型，默认包含所有类别
+        :returns: 参见微信语义接口开发文档        
         :rtype: dict
-        :returns: 参见微信语义接口开发文档
         
         .. note:: 此接口问题比较多，异常返回而且错误码未知，请谨慎使用
         '''
@@ -381,14 +393,19 @@ class OfficialAccount(object):
             'category': ','.join(category),
             'appid': self.appid
         }
-        if uid is not None:
-            data['uid'] = uid
-        if lat is not None and lon is not None:
-            data['latitude'] = lat
-            data['longitude'] = lon
-        if city is not None:
+        if city is None and location is None:
+            raise Exception("one of city and location params must be set")
+            
+        if not city is None:            
             data['city'] = city
+        
+        if not location is None:
+            data['latitude'] = location.latitude
+            data['longitude'] = location.longitude
+            if not location.openid is None:
+                data['uid'] = location.openid
+        
         if region is not None:
             data['region'] = region
-
+            
         return self.client.post('semantic', json=data)

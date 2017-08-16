@@ -12,13 +12,13 @@ import xml.etree.ElementTree as ET
 
 import pytest
 from flask import Flask, request
-from yawxt import OfficialAccount, MessageProcessor, check_signature, Message
+from yawxt import WxClient, MessageHandler, check_signature, Message
 
-class MessageProcessorTester(MessageProcessor):
+class MessageHandlerTester(MessageHandler):
 
     def __init__(self, content, state = None, debug_to_wechat = None):
         self.state = None
-        super(MessageProcessorTester, self).__init__(content, debug_to_wechat = debug_to_wechat)
+        super(MessageHandlerTester, self).__init__(content, debug_to_wechat = debug_to_wechat)
     
     def event_location(self, location):
         #  assert latitude == 23.1374665
@@ -145,8 +145,7 @@ def parametrize(request):
     
 def test_event(parametrize, xml_builder):
     content, expected = parametrize
-    print(xml_builder(*content))
-    processor = MessageProcessorTester(xml_builder(*content), debug_to_wechat=True)
+    processor = MessageHandlerTester(xml_builder(*content), debug_to_wechat=True)
     assert processor.state == expected
 
 @pytest.mark.parametrize("token,nonce,timestamp,signature, time_error",
@@ -160,13 +159,13 @@ def test_check_signature(token, nonce, timestamp, signature, time_error):
     
 def test_processor_property(xml_builder, openid):
     data = xml_builder(*parameters["text"][0])
-    processor = MessageProcessorTester(data, debug_to_wechat=True)
+    processor = MessageHandlerTester(data, debug_to_wechat=True)
     assert processor.openid == openid
     assert processor.user is None
     
 def test_process_message(xml_builder):
     data = xml_builder(*parameters["text"][0])
-    processor = MessageProcessorTester(data, debug_to_wechat=True)
+    processor = MessageHandlerTester(data, debug_to_wechat=True)
     from_message = processor.message
     assert from_message.msg_id == 1234567890123456
     assert from_message.msg_type == "text"
@@ -175,47 +174,47 @@ def test_process_message(xml_builder):
     assert "<Content>this is a test</Content>" in from_message.content    
     
     reply_message = Message.from_string(processor.reply())
-    assert from_message.from_user_id == reply_message.to_user_id
-    assert from_message.to_user_id == reply_message.from_user_id
+    assert from_message.from_id == reply_message.to_id
+    assert from_message.to_id == reply_message.from_id
     
-def test_reply_text(xml_builder, account, openid):
+def test_reply_text(xml_builder, client, openid):
     data = xml_builder(*parameters["text"][0])
-    processor = MessageProcessorTester(data, debug_to_wechat=True)
+    processor = MessageHandlerTester(data, debug_to_wechat=True)
     xml_str = processor.reply()
     message = Message.from_string(xml_str)
     
     ## 测试发送给微信服务器的消息的头部是正确的
     xml = ET.fromstring(xml_str)
-    assert xml.find("ToUserName").text == message.to_user_id
-    assert xml.find("FromUserName").text == message.from_user_id
+    assert xml.find("ToUserName").text == message.to_id
+    assert xml.find("FromUserName").text == message.from_id
     assert int(xml.find("CreateTime").text) == message.create_time
     assert xml.find("MsgType").text == message.msg_type
     assert xml.find("Content").text == ET.fromstring(message.content).find("Content").text
     
     ## 测试Message类的属性是正确的
-    assert message.from_user_id == account.appid
-    assert message.to_user_id == openid
+    assert message.from_id == client.appid
+    assert message.to_id == openid
     assert message.msg_type == 'text'
     assert isinstance(message.create_time, int)
     assert ET.fromstring(message.content).find("Content").text == "this is a test"
     
 def test_reply_image(xml_builder):
     data = xml_builder(*parameters["image"][0] )
-    processor = MessageProcessorTester(data, debug_to_wechat=True)
+    processor = MessageHandlerTester(data, debug_to_wechat=True)
     message = Message.from_string(processor.reply())
     assert message.msg_type == "image"
     assert ET.fromstring(message.content).find("Image").find("MediaId").text == "media_id"
     
 def test_reply_voice(xml_builder):
     data = xml_builder(*parameters["voice"][0])
-    processor = MessageProcessorTester(data, debug_to_wechat=True)
+    processor = MessageHandlerTester(data, debug_to_wechat=True)
     message = Message.from_string(processor.reply())
     assert message.msg_type == "voice"
     assert ET.fromstring(message.content).find("Voice").find("MediaId").text == "media_id"
     
 def test_reply_video(xml_builder):
     data = xml_builder(*parameters["video"][0])
-    processor = MessageProcessorTester(data, debug_to_wechat=True)
+    processor = MessageHandlerTester(data, debug_to_wechat=True)
     message = Message.from_string(processor.reply())
     assert message.msg_type == "video"
     video_xml = ET.fromstring(message.content).find("Video")
@@ -225,7 +224,7 @@ def test_reply_video(xml_builder):
     
 def test_reply_music(xml_builder):
     data = xml_builder(*parameters["shortvideo"][0])
-    processor = MessageProcessorTester(data, debug_to_wechat=True)
+    processor = MessageHandlerTester(data, debug_to_wechat=True)
     message = Message.from_string(processor.reply())
     assert message.msg_type == "music"
     video_xml = ET.fromstring(message.content).find("Music")
@@ -237,7 +236,7 @@ def test_reply_music(xml_builder):
     
 def test_reply_news(xml_builder):
     data = xml_builder(*parameters["location_msg"][0])
-    processor = MessageProcessorTester(data, debug_to_wechat=True)
+    processor = MessageHandlerTester(data, debug_to_wechat=True)
     message = Message.from_string(processor.reply())
     assert message.msg_type == "news"
     assert ET.fromstring(message.content).find("ArticleCount").text == "5"
@@ -246,3 +245,4 @@ def test_reply_news(xml_builder):
     assert video_xml.find("Description").text == "news description"
     assert video_xml.find("PicUrl").text == "http://qq.com"
     assert video_xml.find("Url").text == "http://qq.com"
+    
