@@ -23,7 +23,7 @@ setup(
     keywords=['wechat', 'weixin', '微信'],
     classifiers=[
         'Intended Audience :: Developers',
-        'Natural Language :: Chinese',
+        'Natural Language :: Chinese (Simplified)',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.6',
