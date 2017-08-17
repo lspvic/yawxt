@@ -23,7 +23,7 @@
 .. autoclass:: Location
     :members:
 
-微信HTTP接口OfficialAccount
+微信HTTP接口WxClient
 ------------------------------
 微信HTTP接口主要封装在 :class:`WxClient` 中
 
@@ -61,7 +61,7 @@
 .. autoclass:: WxClient
     :members:
     
-消息处理类MessageProcessor
+消息处理类MessageHandler
 ----------------------------
 
 基本属性

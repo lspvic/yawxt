@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from yawxt import WxClient, check_signature
@@ -14,6 +15,7 @@ token = "token"
 
 session_maker = db.create_session({})
 
+
 @app.route('/wechat', methods=["GET", "POST"])
 def wechat():
     signature = request.args.get('signature')
@@ -23,11 +25,13 @@ def wechat():
         return "Messages not From Wechat"
     if request.method == "GET":
         return request.args.get('echostr')
-        
-    msg = PersistMessageHandler(request.data, wechat_account,
-                            db_session_maker=session_maker,
-                            debug_to_wechat=app.debug)
+
+    msg = PersistMessageHandler(
+        request.data, wechat_account,
+        db_session_maker=session_maker,
+        debug_to_wechat=app.debug)
     return msg.reply()
-    
+
+
 if __name__ == "__main__":
     app.run()
