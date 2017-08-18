@@ -1,14 +1,31 @@
 # -*- coding: utf-8 -*-
 
-import codecs
+import os
+import io
+import re
 from setuptools import setup
 
-with codecs.open("README.rst", "r", "utf8") as f:
-    readme = f.read()
+
+def read(*names, **kwargs):
+    with io.open(
+        os.path.join(os.path.dirname(__file__), *names),
+        encoding=kwargs.get("encoding", "utf8")
+    ) as fp:
+        return fp.read()
+
+
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
+
 
 setup(
     name='yawxt',
-    version='0.1.dev1',
+    version=find_version("yawxt", "__init__.py"),
     packages=['yawxt', ],
     author='lspvic',
     author_email='lspvic@qq.com',
@@ -18,9 +35,9 @@ setup(
     ],
     url='http://github.com/lspvic/yawxt',
     license='MIT License',
-    description='又一个微信开发工具箱 Yet Another WeiXin Tookit',
-    long_description=readme,
-    keywords=['wechat', 'weixin', '微信'],
+    description='又一个微信开发工具箱 Yet Another WeiXin(wechat) Tookit',
+    long_description=read("README.rst"),
+    keywords=['wechat', 'weixin', 'Official Account', '微信', '公众号'],
     classifiers=[
         'Intended Audience :: Developers',
         'Natural Language :: Chinese (Simplified)',

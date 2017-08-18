@@ -25,7 +25,7 @@ __all__ = [
 Base = declarative_base()
 
 message_table = Table(
-    "message", Base.metadata,
+    "wechat_message", Base.metadata,
     Column('id', Integer, primary_key=True),
     Column('to_id', String(100)),
     Column("from_id", String(100)),
@@ -36,7 +36,7 @@ message_table = Table(
 )
 
 user_table = Table(
-    "user", Base.metadata,
+    "wechat_user", Base.metadata,
     Column("id", Integer, primary_key=True),
     Column("subscribe", Integer),
     Column("openid", String(100)),
@@ -56,7 +56,7 @@ user_table = Table(
 )
 
 location_table = Table(
-    "location", Base.metadata,
+    "wechat_location", Base.metadata,
     Column("id", Integer, primary_key=True),
     Column("latitude", Float),
     Column("longitude", Float),

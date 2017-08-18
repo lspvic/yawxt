@@ -3,7 +3,9 @@ yawxt: 又一个微信开发工具箱
 
 |build-status| |pypi-status| |pypi-pyversions| |docs|
 
-Yet Another WeiXin Toolkit
+Yet Another WeiXin(wechat) Toolkit
+
+github：https://github.com/lspvic/yawxt/
 
 文档： https://yawxt.readthedocs.io/
 
@@ -33,7 +35,7 @@ Yet Another WeiXin Toolkit
     'o9KLls70ReakhjebmHUYxjbz9K8c'
     >>> user = client.get_user(openid)
     >>> user
-    User(openid=o9KLls70ReakhjebmHUYxjbz9K8c, nickname=yawxt)
+    {"openid": "o9KLls70ReakhjebmHUYxjbz9K8c", "nickname": "yawxt", ...}
     >>> user.city
     '杭州'
     

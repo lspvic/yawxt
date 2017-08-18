@@ -276,7 +276,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   (master_doc, 'yawxt', 'yawxt Documentation',
-   author, 'yawxt', 'Yet Another WeiXin Toolkit.',
+   author, 'yawxt', 'Yet Another WeiXin(wechat) Toolkit.',
    'Miscellaneous'),
 ]
 
