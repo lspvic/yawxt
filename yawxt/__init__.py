@@ -1,9 +1,17 @@
 # -*- coding:utf-8 -*-
 
+import logging
+import sys
+
 from .client import WxClient
 from .message import MessageHandler, check_signature
 from .models import Message, User, Location
 from .exceptions import *    # noqa
+
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler(sys.stdout))
+logger.setLevel(logging.INFO)
 
 __all__ = [
     "WxClient", "MessageHandler", "APIError", "Message",

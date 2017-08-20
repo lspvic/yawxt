@@ -71,6 +71,7 @@ class RestClient(O2Session):
                 withhold_token=withhold_token, client_id=client_id,
                 client_secret=client_secret, **kwargs)
             result = r.json()
+            logger.debug("request %s result: %s" % (api_type, result))
             if 'errcode' in result and result["errcode"] in (
                 40001, 40014, 41001, 42001,
             ):
@@ -90,6 +91,7 @@ class RestClient(O2Session):
                 withhold_token=withhold_token, client_id=client_id,
                 client_secret=client_secret, **kwargs)
             result = r.json()
+            logger.debug("request %s result: %s" % (api_type, result))
         if 'errcode' in result and result["errcode"] != 0:
             invoke_failure[api_type] += 1
             code = result["errcode"]
