@@ -3,6 +3,8 @@
 '''Tests for WxClient API'''
 
 from __future__ import unicode_literals
+
+import requests
 import pytest
 from yawxt import (
     MaxQuotaError, User, APIError, Location,
@@ -26,6 +28,47 @@ def test_get_user_info(client, openid):
     assert isinstance(user, User)
     assert user.nickname is not None
     assert user.openid is not None
+
+
+def test_user_model(client, monkeypatch):
+    info = {
+            "subscribe": 1, 
+            "openid": "o9KLls80ReakhjsbmHUZxjbz9K8c", 
+            "nickname": "五音盒", 
+            "sex": 1, 
+            "language": "zh_CN", 
+            "city": "杭州", 
+            "province": "浙江", 
+            "country": "中国", 
+            "headimgurl": (
+                "http://wx.qlogo.cn/mmopen/ajSDdqHZLLCXFhHOkecFpWDCW"
+                "l5icpYpzzwc39E4nmyfSicjfg40EWSicf0R7VEDakCySlTybGJtWH4G"
+                "53P01itBqA/0"), 
+            "subscribe_time": 1440489434, 
+            "remark": "", 
+            "groupid": 0, 
+            "tagid_list": [ ]}
+
+    def mock_api_return(resp):
+        return info
+
+    monkeypatch.setattr(requests.Response, "json", mock_api_return)
+
+    user = client.get_user(info["openid"])
+    assert user.openid == info["openid"]
+    assert user.nickname == info["nickname"]
+    assert user.city == info["city"]
+    assert user.province == info["province"]
+    assert user.tagid_list == ""
+    assert user.tagids == info["tagid_list"]
+    assert user.subscribe == info["subscribe"]
+    assert user.sex == info["sex"]
+    assert user.language == info["language"]
+    assert user.country == info["country"]
+    assert user.headimgurl == info["headimgurl"]
+    assert user.subscribe_time == info["subscribe_time"]
+    assert user.remark == info["remark"]
+    assert user.groupid == info["groupid"]
 
 
 @pytest.mark.xfail(raises=APIError)

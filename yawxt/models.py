@@ -17,7 +17,7 @@ def pop_from_etree(xml, tag):
 
 class DictAccess(object):
 
-    __availabe_keys__ = []
+    __availabe_keys__ = set()
 
     def __init__(self, *args, **kwargs):
         for key in self.__availabe_keys__:
@@ -37,7 +37,7 @@ class DictAccess(object):
         if name == "tagid_list":
             if isinstance(value, list):
                 value = ",".join(map(str, value))
-            else:
+            elif value is not None:
                 value = str(value)
         super(DictAccess, self).__setattr__(name, value)
 
@@ -79,9 +79,9 @@ class Message(DictAccess):
             <Label><![CDATA[北京市东城区东长安街]]></Label>
 
     '''
-    __availabe_keys__ = [
+    __availabe_keys__ = set([
         "to_id", "from_id", "create_time",
-        "msg_id", "msg_type", "content"]
+        "msg_id", "msg_type", "content"])
 
     def __init__(self, to_id, from_id, msg_type,
                  content, msg_id=None, create_time=None):
@@ -171,11 +171,11 @@ class User(DictAccess):
     :ivar groupid: 用户所在的分组ID
     :ivar tagid_list: 用户被打上的标签ID列表，是逗号分割的字符串
     '''
-    __availabe_keys__ = [
+    __availabe_keys__ = set([
         "subscribe", "openid", "nickname", "sex", "city",
-        "country", "province", "city", "headimgurl", "subscribe_time",
+        "country", "province", "headimgurl", "subscribe_time",
         "unionid", "remark", "groupid", "tagid_list", "language"
-    ]
+    ])
 
     def __init__(self, _d=None, **kwargs):
         if _d is None:
@@ -202,9 +202,9 @@ class Location(DictAccess):
     :ivar openid: 在次位置的用户openid
     :ivar create_time:  用户在此位置的时间
     '''
-    __availabe_keys__ = [
+    __availabe_keys__ = set([
         "latitude", "longitude", "precision",
-        "openid", "create_time"]
+        "openid", "create_time"])
 
     def __init__(self, latitude, longitude, precision=None,
                  openid=None, create_time=None):
