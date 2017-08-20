@@ -14,8 +14,8 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 logger.setLevel(logging.INFO)
 
 __all__ = [
-    "WxClient", "MessageHandler", "APIError", "Message",
-    "User", "Location", "check_signature"]
+    "WxClient", "MessageHandler", "Message", "User", "Location",
+    "check_signature", "APIError", "SemanticAPIError", ]
 __all__.extend(map(
     lambda cls: cls.__name__,
     default_exceptions.values()))    # noqa

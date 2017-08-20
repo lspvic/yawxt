@@ -197,7 +197,7 @@ class User(DictAccess):
         for key in self.__availabe_keys__:
             if key in info:
                 val = info[key]
-                if val != getattr(self, key):
+                if val is not None and val != getattr(self, key):
                     setattr(self, key, val)
 
 

@@ -137,6 +137,19 @@ class PersistMessageHandler(MessageHandler):
         self.db_session.add(self.message)
         super(PersistMessageHandler, self).before()
 
+    def event_subscribe_from_qrcode(self, scene_value, ticket):
+        self.save_user_info(refresh_interval=0)
+        (super(PersistMessageHandler, self)
+         .event_subscribe_from_qrcode(scene_value, ticket))
+
+    def event_subscribe(self):
+        self.save_user_info(refresh_interval=0)
+        super(PersistMessageHandler, self).event_subscribe()
+
+    def event_unsubscribe(self):
+        self.save_user_info(refresh_interval=0)
+        super(PersistMessageHandler, self).event_unsubscribe()
+
     def event_location(self, location):
         self.db_session.add(location)
         self.log("add location to db: %s" % location)

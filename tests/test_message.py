@@ -27,11 +27,11 @@ class MessageHandlerTester(MessageHandler):
     def event_unsubscribe(self):
         self.state = "unsubscribe"
 
-    def event_subscribe(self, scene_value=None, ticket=None):
-        if scene_value is None:
-            self.state = "欢迎您订阅公众号"
-        else:
-            self.state = (scene_value, ticket)
+    def event_subscribe(self):
+        self.state = "欢迎您订阅公众号"
+
+    def event_subscribe_from_qrcode(self, scene_value=None, ticket=None):
+        self.state = (scene_value, ticket)
 
     def event_view(self, view_key):
         self.state = "open url %s" % view_key

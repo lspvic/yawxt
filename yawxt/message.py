@@ -113,10 +113,9 @@ class MessageHandler(object):
         # 当不是扫码关注时，EventKey存在但内容为空
         if ele is not None and ele.text:
             # event_key一定是以 "qrscene_" 开头的
-
             event_key = int(ele.text[8:])
             ticket = self.xml.find("Ticket").text
-            self.event_subscribe(event_key, ticket)
+            self.event_subscribe_from_qrcode(event_key, ticket)
         else:
             self.event_subscribe()
 
@@ -203,20 +202,24 @@ class MessageHandler(object):
         self.reply_debug_text(
             "location reported: %r" % location)
 
-    def event_subscribe(self, scene_value, ticket):
-        '''用户订阅公众号事件或者扫码关注公众号事件
+    def event_subscribe_from_qrcode(self, scene_value, ticket):
+        '''用户扫码关注公众号事件
 
         :param scene_value: 扫码关注时的二维码场景值
         :param ticket: 扫码关注时的票据，如果只处理订阅事件，忽略这两个参数
 
-        .. seealso:: :meth:`event_scan`
+        .. seealso:: :meth:`event_scan` , :meth:`event_subscribe` .
         '''
-        if scene_value is None:
-            self.reply_text('欢迎您订阅我们的微信公众号')
-        else:
-            self.debug_to_wechat(
+        self.reply_debug_text(
                 '您扫码关注了公众号，scene_value: '
                 '%s, ticket: %s' % (scene_value, ticket))
+
+    def event_subscribe(self):
+        '''用户关注公众号事件
+
+        .. seealso:: :meth:`event_subscribe_from_qrcode`
+        '''
+        self.reply_text('欢迎您订阅我们的微信公众号')
 
     def event_unsubscribe(self):
         '''用户取消订阅公众号事件'''

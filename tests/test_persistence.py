@@ -62,6 +62,7 @@ def test_location_reported(handler, db_session):
     assert location.longitude == 117.518
     assert location.precision == 30
 
+
 def test_refresh_user(xml_builder, db_session, DB_Session,
                           client, openid, monkeypatch):
     user =db_session.query(User).filter_by(openid=openid).first()
@@ -109,3 +110,60 @@ def test_refresh_user(xml_builder, db_session, DB_Session,
     assert handler.user.openid == info["openid"]
     assert handler.user.nickname == info["nickname"]
     assert handler.user.headimgurl == info["headimgurl"]
+
+
+def test_event_subscribe(client, openid,
+                         xml_builder, db_session, DB_Session):
+    user =db_session.query(User).filter_by(openid=openid).first()
+    assert user is not None
+    time.sleep(2)
+    xml_text = xml_builder(
+        "event_subscribe", "<EventKey><![CDATA[]]></EventKey>",
+        msg_id=1234567890123456)
+    handler = PersistMessageHandler(
+        xml_text, client, db_session_maker=DB_Session,
+        debug_to_wechat=True)
+    handler.reply()
+
+    assert handler.user.update_time != user.update_time
+    assert handler.user.subscribe == 1
+
+    time.sleep(2)
+    xml_text = xml_builder(
+        "event_subscribe", '''
+<EventKey><![CDATA[qrscene_123123]]></EventKey>
+<Ticket><![CDATA[TICKET]]></Ticket>''',
+        msg_id=1234567890123456)
+    handler2 = PersistMessageHandler(
+        xml_text, client, db_session_maker=DB_Session,
+        debug_to_wechat=True)
+    handler2.reply()
+
+    assert handler2.user.update_time != handler.user.update_time
+    assert handler2.user.subscribe == 1
+
+
+def test_event_unsubscribe(client, openid, monkeypatch,
+                         xml_builder, db_session, DB_Session):
+    user =db_session.query(User).filter_by(openid=openid).first()
+    assert user is not None
+
+    time.sleep(2)
+    info = {"openid": openid, "subscribe": 0}
+
+    def mock_api_return(resp):
+        return info
+
+    monkeypatch.setattr(requests.Response, "json", mock_api_return)
+
+    xml_text = xml_builder(
+        "event_unsubscribe", "<EventKey />",
+        msg_id=1234567890123456)
+    handler = PersistMessageHandler(
+        xml_text, client, db_session_maker=DB_Session,
+        debug_to_wechat=True)
+    handler.reply()
+
+    assert handler.user.update_time != user.update_time
+    assert handler.user.subscribe == 0
+    assert handler.user.language is not None
