@@ -10,7 +10,7 @@ install:
   - pip install -r requirements.txt
 # command to run tests
 script:
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then flake8 yawxt; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == "3.6" ]]; then flake8 yawxt; fi
   - pytest
 notifications:
   email: false
@@ -19,5 +19,7 @@ deploy:
   user: lspvic
   password: 
     secure: "Dd18jsaMVFLHnmTmFc/xRCoIZfZ6UtgirZ2psgr1jW+dKLWztNSn6EhOGOdZp1BDA5vGK5Ncvsl5xxg5SLjhun+3NjH7cNRJvzLHhuleW9YWWQykj294jmJIBORRUQ3xCzdcYlddjNy3RrjrhUWW97azTauxHxkhzjtmNXgPN2Lu4dELz5IkWv5PfUMyLfliQeeDH2CukumyVhN1HDa4I+TXv24uHNXEqXGUH+zKR9tMKY5djONkerc8EfK1D6kYLbyNc8X34OGizzAWAm7kp+rac5caybQlw7lg/wncipflMwkAqPk3XpV5xpSfAweTNgFPpzHw9mMT4K0Jkhp5R3Dt0X3FBP/yF7R4IryywfMdC+2H4NxW1+ysvPr0khQSQ5gFv1AOr11EoW427fkkfj2+ZKxsZVkFLMLVatwmopmqnAwxN4yD1PwIDON5WnCR7/yLWHvLlZEGj99N675uVcfdGq3LATIF44jsNJnQahnX2pJU683OyrY1CFYzml/jspx3CfqS9lH4oSeElI5R9aJudZxiFGDLz5jlnehdofi3xTSoaIeTudWnfuzBPnaE6Ufqt5Gl9Ejd6BoskjZLwqDlvrK7h2kCHo782K8+P9USat4e8JkhNzIuvM79TslLHsXyV8WFR/ZPBT92lo79nVe7eP6dX1VY4LzJCs3J/jE="
+  distributions: "sdist bdist_wheel"
   on:
     tags: true
+    python: "3.6"
