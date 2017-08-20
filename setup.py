@@ -35,7 +35,7 @@ setup(
     ],
     url='http://github.com/lspvic/yawxt',
     license='MIT License',
-    description='又一个微信开发工具箱 Yet Another WeiXin(wechat) Tookit',
+    description='又一个微信公众号开发工具箱 Yet Another WeiXin(wechat) Tookit',
     long_description=read("README.rst"),
     keywords=['wechat', 'weixin', 'Official Account', '微信', '公众号'],
     classifiers=[

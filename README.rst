@@ -1,5 +1,5 @@
-yawxt: 又一个微信开发工具箱
-============================
+yawxt: 又一个微信公众号开发工具箱
+=================================
 
 |build-status| |pypi-status| |pypi-pyversions| |docs|
 
