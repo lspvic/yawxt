@@ -109,11 +109,12 @@ class MessageHandler(object):
             **kwargs)
 
     def _subscribe(self):
-        event_element = self.xml.find("EventKey")
-        if event_element is not None:
+        ele = self.xml.find("EventKey")
+        # 当不是扫码关注时，EventKey存在但内容为空
+        if ele is not None and ele.text:
             # event_key一定是以 "qrscene_" 开头的
 
-            event_key = int(event_element.text[8:])
+            event_key = int(ele.text[8:])
             ticket = self.xml.find("Ticket").text
             self.event_subscribe(event_key, ticket)
         else:

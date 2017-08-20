@@ -192,6 +192,14 @@ class User(DictAccess):
             if self.tagid_list else []
         )
 
+    def update(self, info):
+        '''更新用户信息'''
+        for key in self.__availabe_keys__:
+            if key in info:
+                val = info[key]
+                if val != getattr(self, key):
+                    setattr(self, key, val)
+
 
 class Location(DictAccess):
     '''用户上报地址类

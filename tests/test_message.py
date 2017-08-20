@@ -91,7 +91,7 @@ parameters = {
 <Precision>119.385040</Precision>'''),
         (23.137466, 113.352425, 119.385040)),
     "subscribe": (
-        ("event_subscribe", ""),
+        ("event_subscribe", "<EventKey><![CDATA[]]></EventKey>"),
         "欢迎您订阅公众号"),
     "subscribe_qrcode": (
         ("event_subscribe", '''

@@ -167,6 +167,7 @@ class PersistMessageHandler(MessageHandler):
                 self.log("add user to db with dict: %s" % user)
             else:
                 user.update(_user)
+                user.update_time = int(time.time())
                 self.log("update user with dict: %s" % _user)
         self._user = user
 
