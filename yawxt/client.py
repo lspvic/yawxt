@@ -97,10 +97,12 @@ class RestClient(O2Session):
             code = result["errcode"]
             error_cls = default_exceptions.get(code, None)
             if error_cls is None:
-                if code >= 7000000 and code < 8000000:
+                if api_type == 'semantic':
                     raise SemanticAPIError(
                         result["errcode"], result["query"])
-                raise APIError(result["errcode"], result["errmsg"])
+                raise APIError(code, result.get(
+                    "errmsg",
+                    "No errmsg suppilied"))
             raise error_cls(result["errmsg"])
         invoke_success[api_type] += 1
         return result
