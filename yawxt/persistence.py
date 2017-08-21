@@ -115,6 +115,7 @@ class PersistMessageHandler(MessageHandler):
     def __init__(self, content, client,  db_session_maker, **kwargs):
         self.db_session = db_session_maker()
         self._user_location = None
+        self._refresh_interval = kwargs.pop("user_refresh_days", 1)
         super(PersistMessageHandler, self).__init__(content, client, **kwargs)
 
     @property
@@ -132,31 +133,40 @@ class PersistMessageHandler(MessageHandler):
             self.log("find user's location: %s" % self._user_location)
         return self._user_location
 
-    def before(self):
+    def _before(self):
         self.save_user_info()
         self.db_session.add(self.message)
-        super(PersistMessageHandler, self).before()
+        self.before()
 
-    def event_subscribe_from_qrcode(self, scene_value, ticket):
+    def _subscribe(self):
         self.save_user_info(refresh_interval=0)
-        (super(PersistMessageHandler, self)
-         .event_subscribe_from_qrcode(scene_value, ticket))
+        ele = self.xml.find("EventKey")
+        # 当不是扫码关注时，EventKey存在但内容为空
+        if ele is not None and ele.text:
+            # event_key一定是以 "qrscene_" 开头的
+            event_key = int(ele.text[8:])
+            ticket = self.xml.find("Ticket").text
+            self.event_subscribe_from_qrcode(event_key, ticket)
+        else:
+            self.event_subscribe()
 
-    def event_subscribe(self):
+    def _unsubscribe(self):
         self.save_user_info(refresh_interval=0)
-        super(PersistMessageHandler, self).event_subscribe()
+        self.event_unsubscribe()
 
-    def event_unsubscribe(self):
-        self.save_user_info(refresh_interval=0)
-        super(PersistMessageHandler, self).event_unsubscribe()
-
-    def event_location(self, location):
+    def _LOCATION(self):
+        lat = float(self.xml.find('Latitude').text)
+        lon = float(self.xml.find('Longitude').text)
+        precision = float(self.xml.find('Precision').text)
+        location = Location(
+            lat, lon, precision, self.openid,
+            self.message.create_time)
         self.db_session.add(location)
         self.log("add location to db: %s" % location)
         self._user_location = location
-        super(PersistMessageHandler, self).event_location(location)
+        self.event_location(location)
 
-    def save_user_info(self, refresh_interval=1.0):
+    def save_user_info(self, refresh_interval=None):
         '''保存或更新发送消息的用户的信息
 
         :param refresh_interval: 从微信服务器刷新用户信息的间隔时间，从上次
@@ -164,13 +174,15 @@ class PersistMessageHandler(MessageHandler):
             可以使用小数，默认为1天, refresh_interval为0时一直拉取.
 
         '''
+        if refresh_interval is None:
+            refresh_interval = self._refresh_interval
+
         user = (self.db_session.query(User)
                 .filter_by(openid=self.openid).first())
         self.log("find user in db: %s" % user)
         refresh = (
-            refresh_interval == 0 or
             user is not None and
-            (time.time() - user.update_time) > refresh_interval * 86400
+            (time.time() - user.update_time) > refresh_interval * 86400 - 3
         )
         if refresh or user is None:
             _user = self.client.get_user(self.openid)
@@ -184,8 +196,8 @@ class PersistMessageHandler(MessageHandler):
                 self.log("update user with dict: %s" % _user)
         self._user = user
 
-    def finish(self):
-        super(PersistMessageHandler, self).finish()
+    def _finish(self):
+        self.finish()
 
         entities = [self.message, self._user]
         if self.reply_message is not None:

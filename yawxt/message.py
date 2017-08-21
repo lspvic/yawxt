@@ -69,7 +69,7 @@ class MessageHandler(object):
         self.openid = self.message.from_id
         self.log("message received %s, content: %s" % (
             self.message, self.message.content))
-        self.before()
+        self._before()
 
         self.xml = ET.fromstring(self.message.content)
         if self.message.msg_type.startswith('event_'):
@@ -107,6 +107,12 @@ class MessageHandler(object):
             self.openid,
             content,
             **kwargs)
+
+    def _before(self):
+        self.before()
+
+    def _finish(self):
+        self.finish()
 
     def _subscribe(self):
         ele = self.xml.find("EventKey")
@@ -466,5 +472,5 @@ class MessageHandler(object):
             self.log("send message: %s" % reply_message)
             self.reply_message = reply_message
             reply_raw = reply_message.build_xml()
-        self.finish()
+        self._finish()
         return reply_raw
