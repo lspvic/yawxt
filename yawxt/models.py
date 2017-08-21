@@ -33,14 +33,6 @@ class DictAccess(object):
             return setattr(self, key, value)
         raise AttributeError()
 
-    def __setattr__(self, name, value):
-        if name == "tagid_list":
-            if isinstance(value, list):
-                value = ",".join(map(str, value))
-            elif value is not None:
-                value = str(value)
-        super(DictAccess, self).__setattr__(name, value)
-
     def __iter__(self):
         return iter(self.__availabe_keys__)
 
@@ -191,6 +183,14 @@ class User(DictAccess):
             list(map(int, self.tagid_list.split(",")))
             if self.tagid_list else []
         )
+
+    def __setattr__(self, name, value):
+        if name == "tagid_list":
+            if isinstance(value, list):
+                value = ",".join(map(str, value))
+            elif value is not None:
+                value = str(value)
+        super(User, self).__setattr__(name, value)
 
     def update(self, info):
         '''更新用户信息'''

@@ -115,6 +115,7 @@ def test_refresh_user(xml_builder, db_session, DB_Session,
 def test_event_subscribe(client, openid,
                          xml_builder, db_session, DB_Session):
     user =db_session.query(User).filter_by(openid=openid).first()
+    print("first user:", user.update_time)
     assert user is not None
     time.sleep(2)
     xml_text = xml_builder(
@@ -127,6 +128,13 @@ def test_event_subscribe(client, openid,
 
     assert handler.user.update_time != user.update_time
     assert handler.user.subscribe == 1
+
+    db_session.expire_all()
+    user2 = db_session.query(User).filter_by(openid=openid).first()
+    assert user2 == handler.user
+    # user will update automatically so next assertion will False
+    # assert user2.update_time != user.update_time
+    assert user2.update_time == handler.user.update_time
 
     time.sleep(2)
     xml_text = xml_builder(
@@ -142,9 +150,15 @@ def test_event_subscribe(client, openid,
     assert handler2.user.update_time != handler.user.update_time
     assert handler2.user.subscribe == 1
 
+    db_session.expire_all()
+    user3 = db_session.query(User).filter_by(openid=openid).first()
+    assert user3 == handler2.user
+    assert user3.update_time == handler2.user.update_time
+
 
 def test_event_unsubscribe(client, openid, monkeypatch,
                          xml_builder, db_session, DB_Session):
+
     user =db_session.query(User).filter_by(openid=openid).first()
     assert user is not None
 
@@ -167,3 +181,8 @@ def test_event_unsubscribe(client, openid, monkeypatch,
     assert handler.user.update_time != user.update_time
     assert handler.user.subscribe == 0
     assert handler.user.language is not None
+
+    db_session.expire_all()
+    user2 =db_session.query(User).filter_by(openid=openid).first()
+    assert user2 == handler.user
+    assert user2.update_time == handler.user.update_time

@@ -457,13 +457,14 @@ class MessageHandler(object):
 
         if self._reply_type is None:
             self.log("send empty, user will receive nothing")
-            return ''
-        reply_message = Message(
-            self.message.from_id, self.message.to_id,
-            self._reply_type, self._reply, self.message.msg_id,
-        )
-        self.log("send message: %s" % reply_message)
-        self.reply_message = reply_message
+            reply_raw = ""
+        else:
+            reply_message = Message(
+                self.message.from_id, self.message.to_id,
+                self._reply_type, self._reply, self.message.msg_id,
+            )
+            self.log("send message: %s" % reply_message)
+            self.reply_message = reply_message
+            reply_raw = reply_message.build_xml()
         self.finish()
-
-        return reply_message.build_xml()
+        return reply_raw

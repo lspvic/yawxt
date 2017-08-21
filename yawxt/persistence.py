@@ -113,7 +113,7 @@ class PersistMessageHandler(MessageHandler):
     '''
 
     def __init__(self, content, client,  db_session_maker, **kwargs):
-        self.db_session = db_session_maker(expire_on_commit=False)
+        self.db_session = db_session_maker()
         self._user_location = None
         super(PersistMessageHandler, self).__init__(content, client, **kwargs)
 
@@ -187,8 +187,12 @@ class PersistMessageHandler(MessageHandler):
     def finish(self):
         super(PersistMessageHandler, self).finish()
 
+        entities = [self.message, self._user]
         if self.reply_message is not None:
             self.db_session.add(self.reply_message)
+            entities.append(self.reply_message)
 
         self.db_session.commit()
+        for entity in entities:
+            self.db_session.refresh(entity)
         self.db_session.close()
