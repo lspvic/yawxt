@@ -20,4 +20,4 @@ __all__.extend(map(
     lambda cls: cls.__name__,
     default_exceptions.values()))    # noqa
 
-__version__ = "0.1.dev2"
+__version__ = "0.1"
