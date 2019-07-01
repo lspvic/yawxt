@@ -9,7 +9,7 @@ try:
         Table, Text, Column, Integer, String, Float, BigInteger)
     from sqlalchemy.ext.declarative import declarative_base
     from sqlalchemy.orm import mapper
-except:
+except ImportError:
     logging.error(
         "please install sqlalchemy"
         "if you want to store wechat messages on database")
@@ -130,7 +130,7 @@ class PersistMessageHandler(MessageHandler):
                 .filter_by(openid=self.openid)
                 .order_by(Location.create_time.desc())
                 .first())
-            self.log("find user's location: %s" % self._user_location)
+            self.log("find user's location: %s", self._user_location)
         return self._user_location
 
     def _before(self):
@@ -162,7 +162,7 @@ class PersistMessageHandler(MessageHandler):
             lat, lon, precision, self.openid,
             self.message.create_time)
         self.db_session.add(location)
-        self.log("add location to db: %s" % location)
+        self.log("add location to db: %s", location)
         self._user_location = location
         self.event_location(location)
 
@@ -179,7 +179,7 @@ class PersistMessageHandler(MessageHandler):
 
         user = (self.db_session.query(User)
                 .filter_by(openid=self.openid).first())
-        self.log("find user in db: %s" % user)
+        self.log("find user in db: %s", user)
         refresh = (
             user is not None and
             (time.time() - user.update_time) > refresh_interval * 86400 - 3
@@ -189,11 +189,11 @@ class PersistMessageHandler(MessageHandler):
             if user is None:
                 user = _user
                 self.db_session.add(user)
-                self.log("add user to db with dict: %s" % user)
+                self.log("add user to db with dict: %s", user)
             else:
                 user.update(_user)
                 user.update_time = int(time.time())
-                self.log("update user with dict: %s" % _user)
+                self.log("update user with dict: %s", _user)
         self._user = user
 
     def _finish(self):

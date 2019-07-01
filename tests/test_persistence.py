@@ -64,8 +64,8 @@ def test_location_reported(handler, db_session):
 
 
 def test_refresh_user(xml_builder, db_session, DB_Session,
-                          client, openid, monkeypatch):
-    user =db_session.query(User).filter_by(openid=openid).first()
+                      client, openid, monkeypatch):
+    user = db_session.query(User).filter_by(openid=openid).first()
     assert user is not None
 
     old_time_func = time.time
@@ -74,22 +74,22 @@ def test_refresh_user(xml_builder, db_session, DB_Session,
         return old_time_func() + 86400
 
     info = {
-            "subscribe": 1, 
-            "openid": "o9KLls80ReakhjsbmHUZxjbz9K8c", 
-            "nickname": "五音盒", 
-            "sex": 1, 
-            "language": "zh_CN", 
-            "city": "杭州", 
-            "province": "浙江", 
-            "country": "中国", 
+            "subscribe": 1,
+            "openid": "o9KLls80ReakhjsbmHUZxjbz9K8c",
+            "nickname": "五音盒",
+            "sex": 1,
+            "language": "zh_CN",
+            "city": "杭州",
+            "province": "浙江",
+            "country": "中国",
             "headimgurl": (
                 "http://wx.qlogo.cn/mmopen/ajSDdqHZLLCXFhHOkecFpWDCW"
                 "l5icpYpzzwc39E4nmyfSicjfg40EWSicf0R7VEDakCySlTybGJtWH4G"
-                "53P01itBqA/0"), 
-            "subscribe_time": 1440489434, 
-            "remark": "", 
-            "groupid": 0, 
-            "tagid_list": [ ]}
+                "53P01itBqA/0"),
+            "subscribe_time": 1440489434,
+            "remark": "",
+            "groupid": 0,
+            "tagid_list": []}
 
     assert user.nickname != info["nickname"]
 
@@ -114,7 +114,7 @@ def test_refresh_user(xml_builder, db_session, DB_Session,
 
 def test_event_subscribe(client, openid,
                          xml_builder, db_session, DB_Session):
-    user =db_session.query(User).filter_by(openid=openid).first()
+    user = db_session.query(User).filter_by(openid=openid).first()
     print("first user:", user.update_time)
     assert user is not None
     time.sleep(2)
@@ -157,9 +157,9 @@ def test_event_subscribe(client, openid,
 
 
 def test_event_unsubscribe(client, openid, monkeypatch,
-                         xml_builder, db_session, DB_Session):
+                           xml_builder, db_session, DB_Session):
 
-    user =db_session.query(User).filter_by(openid=openid).first()
+    user = db_session.query(User).filter_by(openid=openid).first()
     assert user is not None
 
     time.sleep(2)
@@ -183,6 +183,6 @@ def test_event_unsubscribe(client, openid, monkeypatch,
     assert handler.user.language is not None
 
     db_session.expire_all()
-    user2 =db_session.query(User).filter_by(openid=openid).first()
+    user2 = db_session.query(User).filter_by(openid=openid).first()
     assert user2 == handler.user
     assert user2.update_time == handler.user.update_time

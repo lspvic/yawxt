@@ -67,8 +67,10 @@ class MessageHandler(object):
         self.message = Message.from_string(content)
         self.reply_message = None
         self.openid = self.message.from_id
-        self.log("message received %s, content: %s" % (
-            self.message, self.message.content))
+        self.log(
+            "message received %s, content: %s",
+            self.message, self.message.content
+        )
         self._before()
 
         self.xml = ET.fromstring(self.message.content)
@@ -78,7 +80,7 @@ class MessageHandler(object):
             msg_type = self.message.msg_type
         proc = getattr(self, "_%s" % msg_type, None)
         if proc is None:
-            self.log("unkown type found: %s" % msg_type,
+            self.log("unkown type found: %s", msg_type,
                      level=logging.WARNING)
         else:
             proc()
@@ -100,12 +102,13 @@ class MessageHandler(object):
         '''
         pass
 
-    def log(self, content, level=logging.DEBUG, **kwargs):
+    def log(self, content, *args, **kwargs):
+        level = kwargs.pop("level", logging.DEBUG)
         logger.log(
             level,
-            "message openid(%s): %s",
+            "message openid(%s): " + content,
             self.openid,
-            content,
+            *args,
             **kwargs)
 
     def _before(self):
@@ -135,17 +138,17 @@ class MessageHandler(object):
         location = Location(
             lat, lon, precision, self.openid,
             self.message.create_time)
-        self.log("location event: %r" % location)
+        self.log("location event: %r", location)
         self.event_location(location)
 
     def _CLICK(self):
         click_key = self.xml.find('EventKey').text
-        self.log("click event: %s" % click_key)
+        self.log("click event: %s", click_key)
         self.event_click(click_key)
 
     def _VIEW(self):
         view_key = self.xml.find('EventKey').text
-        self.log("view event: %s" % view_key)
+        self.log("view event: %s", view_key)
         self.event_view(view_key)
 
     def _SCAN(self):
@@ -266,7 +269,7 @@ class MessageHandler(object):
             #. "failed: system failed"
 
         '''
-        self.log("%s send status: %s" % (self.msg_id, status))
+        self.log("%s send status: %s", self.message.msg_id, status)
 
     def on_text(self, text):
         '''接收到文本消息处理方法
@@ -469,7 +472,7 @@ class MessageHandler(object):
                 self.message.from_id, self.message.to_id,
                 self._reply_type, self._reply, self.message.msg_id,
             )
-            self.log("send message: %s" % reply_message)
+            self.log("send message: %s", reply_message)
             self.reply_message = reply_message
             reply_raw = reply_message.build_xml()
         self._finish()

@@ -183,21 +183,26 @@ def test_event(parametrize, xml_builder):
             "awekRO2Q2rhIXv3N5WUK",
             "1502593490",
             "22c3c573b9e4c3a15735a2f077bef067f4aac8d6", 0),
-        pytest.mark.xfail((
+        pytest.param(
             "LpxhtFU4GN",
             "awekRO2Q2rhIXv3N5WUK",
             "1502593490",
-            "22c3c573b9e4c3a15735a2f077bef067f4aac8d6", 600)),
-        pytest.mark.xfail((
+            "22c3c573b9e4c3a15735a2f077bef067f4aac8d6", 600,
+            marks=pytest.mark.xfail),
+        pytest.param(
             "LpxhtFU4Gn",
             "awekRO2Q2rhIXv3N5WUK",
             "1502593490",
-            "22c3c573b9e4c3a15735a2f077bef067f4aac8d6", 0)),
-        pytest.mark.xfail((
+            "22c3c573b9e4c3a15735a2f077bef067f4aac8d6", 0,
+            marks=pytest.mark.xfail),
+        pytest.param(
             "LpxhtFU4GN",
             "awekRO2Q2rhIXv3N5WUK",
             "1502593490",
-            "22c3c573b9e4c3a15735a2f077bef067f4aac8d5", 0)), ])
+            "22c3c573b9e4c3a15735a2f077bef067f4aac8d5", 0,
+            marks=pytest.mark.xfail),
+    ]
+)
 def test_check_signature(token, nonce, timestamp, signature, time_error):
     assert check_signature(
         token, nonce, timestamp, signature, time_error=time_error)

@@ -10,6 +10,7 @@ from yawxt import (
 def test_exception(client, openid, monkeypatch):
 
     result = {"errcode": 45001}
+
     def mock_api_return(resp):
         return result
 
@@ -42,4 +43,4 @@ def test_exception(client, openid, monkeypatch):
         'errcode': -1,
         'errmsg': 'system error hint: [Qy4FvA0642vr24]'}
     with pytest.raises(SystemAPIError):
-        user = client.get_user(openid)
+        user = client.get_user(openid) # noqa

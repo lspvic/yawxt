@@ -32,22 +32,22 @@ def test_get_user_info(client, openid):
 
 def test_user_model(client, monkeypatch):
     info = {
-            "subscribe": 1, 
-            "openid": "o9KLls80ReakhjsbmHUZxjbz9K8c", 
-            "nickname": "五音盒", 
-            "sex": 1, 
-            "language": "zh_CN", 
-            "city": "杭州", 
-            "province": "浙江", 
-            "country": "中国", 
+            "subscribe": 1,
+            "openid": "o9KLls80ReakhjsbmHUZxjbz9K8c",
+            "nickname": "五音盒",
+            "sex": 1,
+            "language": "zh_CN",
+            "city": "杭州",
+            "province": "浙江",
+            "country": "中国",
             "headimgurl": (
                 "http://wx.qlogo.cn/mmopen/ajSDdqHZLLCXFhHOkecFpWDCW"
                 "l5icpYpzzwc39E4nmyfSicjfg40EWSicf0R7VEDakCySlTybGJtWH4G"
-                "53P01itBqA/0"), 
-            "subscribe_time": 1440489434, 
-            "remark": "", 
-            "groupid": 0, 
-            "tagid_list": [ ]}
+                "53P01itBqA/0"),
+            "subscribe_time": 1440489434,
+            "remark": "",
+            "groupid": 0,
+            "tagid_list": []}
 
     def mock_api_return(resp):
         return info

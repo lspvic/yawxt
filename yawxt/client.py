@@ -71,7 +71,7 @@ class RestClient(O2Session):
                 withhold_token=withhold_token, client_id=client_id,
                 client_secret=client_secret, **kwargs)
             result = r.json()
-            logger.debug("request %s result: %s" % (api_type, result))
+            logger.debug("request %s result: %s", api_type, result)
             if 'errcode' in result and result["errcode"] in (
                 40001, 40014, 41001, 42001,
             ):
@@ -80,18 +80,18 @@ class RestClient(O2Session):
                     description=result["errmsg"])
         except OAuth2Error as e:
             logger.debug(
-                "%s request token error, errcode: %s, message: %s" % (
-                    api_type, e.status_code, e.description)
+                "%s request token error, errcode: %s, message: %s",
+                api_type, e.status_code, e.description
             )
             token = self.fetch_token(
                 self.token_url, method='GET', **self.token_kwargs)
-            logger.debug("fetch oauth2 access_token: %s" % token)
+            logger.debug("fetch oauth2 access_token: %s", token)
             r = super(RestClient, self).request(
                 method, url, data=data, headers=headers,
                 withhold_token=withhold_token, client_id=client_id,
                 client_secret=client_secret, **kwargs)
             result = r.json()
-            logger.debug("request %s result: %s" % (api_type, result))
+            logger.debug("request %s result: %s", api_type, result)
         if 'errcode' in result and result["errcode"] != 0:
             invoke_failure[api_type] += 1
             code = result["errcode"]
@@ -277,7 +277,7 @@ class WxClient(object):
         :returns: 票据 ``dict`` , 包含 ``ticket`` ,
             ``expires_at`` , ``expires_at`` 等字段
         '''
-        logger.debug("current js ticket: %s" % self._js_ticket)
+        logger.debug("current js ticket: %s", self._js_ticket)
         if (
             not self._js_ticket or
             self._js_ticket["expires_at"] < time.time()
@@ -286,7 +286,7 @@ class WxClient(object):
                 'jsapi', params={"type": "jsapi"})
             self._js_ticket["expires_at"] = time.time(
             ) + int(self._js_ticket["expires_in"])
-            logger.debug("get new js ticket: %s" % self._js_ticket)
+            logger.debug("get new js ticket: %s", self._js_ticket)
         return self._js_ticket
 
     def js_sign(self, url, debug=True):

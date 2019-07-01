@@ -59,8 +59,9 @@ def statistic(pytestconfig):
 
     yield
     from yawxt.client import invoke_failure, invoke_success, WxClient
+
     capmanager = pytestconfig.pluginmanager.getplugin('capturemanager')
-    capmanager.suspendcapture()
+    capmanager.suspend_global_capture()
     print()
     print()
     print("+++++API USAGE STATS++++++")
@@ -68,4 +69,4 @@ def statistic(pytestconfig):
         s, f = invoke_success[key], invoke_failure[key]
         print(key, s, f, s+f)
     print("+++++++++++++++++++++++")
-    capmanager.resumecapture()
+    capmanager.resume_global_capture()
